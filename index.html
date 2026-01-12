@@ -2,157 +2,239 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>GESTÃO MASTER - Andrea Macarron</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- META TAGS PWA -->
+    <!-- META TAGS PWA - COMPLETAS -->
     <meta name="theme-color" content="#eab308">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gestão Master">
+    <meta name="description" content="Sistema de Gestão Master - Andrea Macarron">
 
-    <!-- PWA E ÍCONE FLATICON -->
+    <title>GESTÃO MASTER - Andrea Macarron</title>
+
+    <!-- PWA IMPLEMENTATION - COMPLETO E FUNCIONAL -->
     <script>
-    (function() {
-        const iconURL = "https://cdn-icons-png.flaticon.com/512/3079/3079645.png";
+        (function() {
+            // Ícone PNG personalizado (Solicitado pelo usuário)
+            const iconURL = "https://cdn-icons-png.flaticon.com/512/3079/3079645.png";
 
-        const manifest = {
-            name: "Gestão Master - Andrea Macarron",
-            short_name: "Gestão Master",
-            start_url: "./",
-            display: "standalone",
-            background_color: "#1f2937",
-            theme_color: "#eab308",
-            icons: [
-                { src: iconURL, sizes: "192x192", type: "image/png", purpose: "any" },
-                { src: iconURL, sizes: "512x512", type: "image/png", purpose: "any" },
-                { src: iconURL, sizes: "512x512", type: "image/png", purpose: "maskable" }
-            ]
-        };
+            // Manifest PWA completo
+            const manifest = {
+                "name": "Gestão Master - Andrea Macarron",
+                "short_name": "Gestão Master",
+                "description": "Sistema de Gestão Administrativa Master",
+                "start_url": "./",
+                "scope": "/",
+                "display": "standalone",
+                "orientation": "portrait-primary",
+                "background_color": "#1f2937",
+                "theme_color": "#eab308",
+                "icons": [
+                    {
+                        "src": iconURL,
+                        "sizes": "192x192",
+                        "type": "image/png",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconURL,
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconURL,
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "maskable"
+                    }
+                ],
+                "categories": ["business", "productivity"],
+                "lang": "pt-BR",
+                "dir": "ltr"
+            };
 
-        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
+            // Criar Blob do manifest e injetar
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
 
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = url;
-        document.head.appendChild(link);
+            const linkManifest = document.createElement('link');
+            linkManifest.rel = 'manifest';
+            linkManifest.href = manifestURL;
+            document.head.appendChild(linkManifest);
 
-        const appleIcon = document.createElement('link');
-        appleIcon.rel = 'apple-touch-icon';
-        appleIcon.href = iconURL;
-        document.head.appendChild(appleIcon);
+            // Apple Touch Icon (CRÍTICO para iPhone/iPad)
+            const linkAppleIcon = document.createElement('link');
+            linkAppleIcon.rel = 'apple-touch-icon';
+            linkAppleIcon.href = iconURL;
+            document.head.appendChild(linkAppleIcon);
 
-        const icon = document.createElement('link');
-        icon.rel = 'icon';
-        icon.href = iconURL;
-        document.head.appendChild(icon);
+            // Ícone padrão
+            const linkIcon = document.createElement('link');
+            linkIcon.rel = 'icon';
+            linkIcon.type = 'image/png';
+            linkIcon.href = iconURL;
+            document.head.appendChild(linkIcon);
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-        }
+            // Registrar Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function(reg) {
+                            console.log('✅ Service Worker registrado!');
+                        })
+                        .catch(function(err) {
+                            console.log('⚠️ Service Worker falhou:', err);
+                        });
+                });
+            }
 
-        console.log('✅ PWA e ícone Flaticon configurados!');
-    })();
+            console.log('✅ PWA Gestão Master configurado com sucesso!');
+        })();
     </script>
 
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React e ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FIREBASE SDKs (Adicionados para corrigir a falha de conexão) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- CSS Customizado - TOTALMENTE RESPONSIVO -->
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: #f5f5f5; }
-        .sidebar { min-height: 100vh; }
-        
-        /* Estilos específicos para Impressão */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-content, #printable-content * {
-                visibility: visible;
-            }
-            #printable-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                padding: 20px;
-                z-index: 9999;
-            }
-            .no-print { display: none !important; }
-        }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-        }
-        .gold-text {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 100%; /* CRÍTICO: previne overflow */
+      }
 
-        /* === CSS ULTRA-RESPONSIVO ADICIONADO === */
-        html {
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow-x: hidden !important;
-        }
+      html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden; /* CRÍTICO: previne scroll horizontal */
+        -webkit-overflow-scrolling: touch;
+      }
 
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-tap-highlight-color: transparent; /* Remove highlight azul no mobile */
+      }
+
+      #root {
+        width: 100%;
+        min-height: 100vh;
+        overflow-x: hidden; /* Extra proteção */
+      }
+
+      /* Animações */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      /* Scroll suave */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Scrollbar customizada */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #eab308;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ca8a04;
+      }
+
+      /* Remove outline em mobile */
+      button:focus, 
+      input:focus, 
+      textarea:focus,
+      select:focus {
+        outline: none;
+      }
+
+      /* Touch feedback */
+      button:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+      }
+
+      /* Imagens responsivas */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Fix específico para iOS Safari */
+      @supports (-webkit-touch-callout: none) {
         body {
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow-x: hidden !important;
+          min-height: -webkit-fill-available;
+        }
+      }
+
+      /* Prevenir zoom em inputs (iOS) */
+      input[type="text"],
+      input[type="email"],
+      input[type="number"],
+      input[type="tel"],
+      input[type="password"],
+      textarea,
+      select {
+        font-size: 16px !important; /* Mínimo 16px previne zoom no iOS */
+      }
+
+      /* Garantir que containers flex não quebrem */
+      .flex, .grid {
+        min-width: 0;
+      }
+
+      /* Fix para cards e containers em mobile */
+      @media (max-width: 768px) {
+        * {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
 
-        #root {
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow-x: hidden !important;
+        /* Reduzir padding em mobile */
+        .px-6, .px-8 {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
         }
+      }
+    </style>
+  </head>
 
-        #root * {
-            max-width: 100% !important;
-        }
 
-        #root > div {
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow-x: hidden !important;
-        }
-
-        @media (max-width: 768px) {
-            * {
-                word-wrap: break-word !important;
-                overflow-wrap: break-word !important;
-            }
-
-            .px-6, .px-8 {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-        }
-        /* === FIM CSS RESPONSIVO === */
-        </style>
-</head>
 <body>
-    <div id="root" class="w-full max-w-full overflow-x-hidden"></div>
+    <div id="root"></div>
 
     <script>
       // CONFIGURAÇÃO REAL DO FIREBASE (Inserida conforme solicitado)
@@ -245,15 +327,16 @@
         // Novo estado para controlar a Pré-visualização de Impressão (ORIGINAL)
         const [printPreviewData, setPrintPreviewData] = React.useState(null);
 
+        // MODIFICADO: MenuButton agora é responsivo e horizontal no mobile
         const MenuButton = ({ tab, icon, label }) => {
           return React.createElement('button', {
             onClick: () => setActiveTab(tab),
-            className: `flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left ${
+            className: `flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap flex-shrink-0 ${
               activeTab === tab 
                 ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-lg font-bold' 
                 : 'text-gray-400 hover:bg-gray-900'
             }`
-          }, `${icon} ${label}`);
+          }, React.createElement('span', null, icon), React.createElement('span', { className: 'md:inline' }, label));
         };
 
         const FormInput = ({ label, type = "text", placeholder }) => {
@@ -338,20 +421,25 @@
             }
         };
 
-        return React.createElement('div', { className: 'flex min-h-screen bg-gray-100' },
-          // Sidebar (ORIGINAL)
-          React.createElement('div', { className: 'w-64 bg-black sidebar no-print border-r-2 border-yellow-600' },
-            React.createElement('div', { className: 'p-6' },
-              React.createElement('div', { className: 'mb-8 text-center' },
+        // LAYOUT RESPONSIVO ATUALIZADO (AQUI ESTÁ A MUDANÇA)
+        return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
+          // Sidebar - MODIFICADO: Menu deslizante horizontal no mobile
+          React.createElement('div', { className: 'w-full md:w-64 bg-black sidebar no-print border-r-0 md:border-r-2 border-b-2 md:border-b-0 border-yellow-600 flex-shrink-0' },
+            React.createElement('div', { className: 'p-4 md:p-6' },
+              // Header/Logo Compacto no Mobile
+              React.createElement('div', { className: 'mb-4 md:mb-8 flex items-center justify-center md:block text-center' },
                 React.createElement('img', { 
                   src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png',
                   alt: 'Logo',
-                  className: 'w-16 h-16 mx-auto mb-3'
+                  className: 'w-10 h-10 md:w-16 md:h-16 mr-3 md:mr-auto md:mx-auto md:mb-3'
                 }),
-                React.createElement('h1', { className: 'text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'),
-                React.createElement('p', { className: 'text-yellow-600 text-sm mt-1 font-semibold' }, 'Andrea Macarron')
+                React.createElement('div', null,
+                    React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'),
+                    React.createElement('p', { className: 'text-yellow-600 text-xs md:text-sm mt-1 font-semibold' }, 'Andrea Macarron')
+                )
               ),
-              React.createElement('nav', { className: 'space-y-2' },
+              // Navegação: Horizontal no Mobile (scroll), Vertical no Desktop
+              React.createElement('nav', { className: 'flex overflow-x-auto gap-2 md:block md:space-y-2 pb-2 md:pb-0' },
                 React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
                 React.createElement(MenuButton, { tab: 'realestate', icon: '🏢', label: 'Imobiliárias' }),
                 React.createElement(MenuButton, { tab: 'tenants', icon: '👥', label: 'Inquilinos' }),
@@ -368,8 +456,8 @@
             )
           ),
 
-          // Main Content
-          React.createElement('div', { className: 'flex-1 p-8 overflow-auto' },
+          // Main Content - Responsivo (padding menor no mobile)
+          React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' }, // Ajuste de altura no mobile
 
             // Modal de Pré-visualização de Impressão (ORIGINAL)
             printPreviewData && React.createElement('div', { 
