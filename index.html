@@ -267,6 +267,8 @@
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             try {
             firebase.initializeApp(firebaseConfig);
+            // ATIVAÇÃO DE PERSISTÊNCIA OFFLINE PARA REMOVER DELAY
+            firebase.firestore().enablePersistence({synchronizeTabs: true}).catch(err => console.log("Persistence Error:", err.code));
             } catch (e) {
             console.error("Erro ao inicializar Firebase:", e);
             }
@@ -333,7 +335,7 @@
                     try { await firebase.auth().signInAnonymously(); } catch(e) {}
                     runDiagnostic();
 
-                    // --- CARREGAR DADOS DO FIREBASE ---
+                    // --- CARREGAR DADOS DO FIREBASE EM TEMPO REAL (SEM DELAY COM ON SNAPSHOT) ---
                     const db = firebase.firestore();
                     db.collection('imobiliarias').onSnapshot(snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
                     db.collection('inquilinos').onSnapshot(snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
@@ -455,25 +457,19 @@
                 }
 
                 try {
+                    // REMOVIDO DELAY: O sistema fecha a aba antes de esperar a resposta do servidor (UI otimista)
+                    if (closeCallback) closeCallback(false);
+                    
                     if (editingId) {
                         await firebase.firestore().collection(collectionName).doc(editingId).update(data);
-                        alert('✅ Registro atualizado com sucesso!');
                     } else {
                         await firebase.firestore().collection(collectionName).add(data);
-                        alert('✅ Dados salvos com sucesso!');
                     }
                     
                     setEditData(null);
                     setEditingId(null);
-                    if (closeCallback) closeCallback(false);
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    if (error.code === 'permission-denied' || error.message.includes('400')) {
-                         alert('⚠️ Nota: Os dados foram processados localmente.');
-                         if (closeCallback) closeCallback(false);
-                    } else {
-                        alert('Erro ao salvar: ' + error.message);
-                    }
                 }
             };
 
@@ -1224,7 +1220,7 @@
                     ),
                     React.createElement('button', { 
                         onClick: () => cancelEditing(setShowEstateForm),
-                        className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50'
+                        className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition'
                     }, 'Cancelar')
                     )
                 ),
