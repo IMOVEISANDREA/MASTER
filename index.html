@@ -17,7 +17,7 @@
     <!-- PWA IMPLEMENTATION - COMPLETO E FUNCIONAL -->
     <script>
         (function() {
-            // Ícone PNG personalizado (Solicitado pelo usuário)
+            // Ícone PNG personalizado
             const iconURL = "https://cdn-icons-png.flaticon.com/512/3079/3079645.png";
 
             // Manifest PWA completo
@@ -65,7 +65,7 @@
             linkManifest.href = manifestURL;
             document.head.appendChild(linkManifest);
 
-            // Apple Touch Icon (CRÍTICO para iPhone/iPad)
+            // Apple Touch Icon
             const linkAppleIcon = document.createElement('link');
             linkAppleIcon.rel = 'apple-touch-icon';
             linkAppleIcon.href = iconURL;
@@ -81,7 +81,8 @@
             // Registrar Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js')
+                    // Caminho ajustado para ./sw.js
+                    navigator.serviceWorker.register('./sw.js')
                         .then(function(reg) {
                             console.log('✅ Service Worker registrado!');
                         })
@@ -115,13 +116,13 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        max-width: 100%; /* CRÍTICO: previne overflow */
+        max-width: 100%;
       }
 
       html, body {
         width: 100%;
         max-width: 100vw;
-        overflow-x: hidden; /* CRÍTICO: previne scroll horizontal */
+        overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
       }
 
@@ -129,13 +130,13 @@
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        -webkit-tap-highlight-color: transparent; /* Remove highlight azul no mobile */
+        -webkit-tap-highlight-color: transparent;
       }
 
       #root {
         width: 100%;
         min-height: 100vh;
-        overflow-x: hidden; /* Extra proteção */
+        overflow-x: hidden;
       }
 
       /* Animações */
@@ -208,7 +209,7 @@
       input[type="password"],
       textarea,
       select {
-        font-size: 16px !important; /* Mínimo 16px previne zoom no iOS */
+        font-size: 16px !important;
       }
 
       /* Garantir que containers flex não quebrem */
@@ -223,7 +224,6 @@
           overflow-wrap: break-word;
         }
 
-        /* Reduzir padding em mobile */
         .px-6, .px-8 {
           padding-left: 1rem !important;
           padding-right: 1rem !important;
@@ -330,7 +330,7 @@
             // Novo estado para controlar a Pré-visualização de Impressão (ORIGINAL)
             const [printPreviewData, setPrintPreviewData] = React.useState(null);
 
-            // MODIFICADO: MenuButton agora é responsivo e horizontal no mobile
+            // MenuButton responsivo (horizontal no mobile)
             const MenuButton = ({ tab, icon, label }) => {
             return React.createElement('button', {
                 onClick: () => setActiveTab(tab),
@@ -366,7 +366,6 @@
                 );
             };
 
-            // Função para gerar estrutura do relatório (SEM DADOS FICTÍCIOS - ORIGINAL)
             const getReportStructure = (type) => {
                 switch(type) {
                     case 'Financeiro':
@@ -424,9 +423,9 @@
                 }
             };
 
-            // LAYOUT RESPONSIVO ATUALIZADO (AQUI ESTÁ A MUDANÇA)
+            // LAYOUT RESPONSIVO ATUALIZADO
             return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
-            // Sidebar - MODIFICADO: Menu deslizante horizontal no mobile
+            // Sidebar - Menu deslizante horizontal no mobile
             React.createElement('div', { className: 'w-full md:w-64 bg-black sidebar no-print border-r-0 md:border-r-2 border-b-2 md:border-b-0 border-yellow-600 flex-shrink-0' },
                 React.createElement('div', { className: 'p-4 md:p-6' },
                 // Header/Logo Compacto no Mobile
@@ -460,9 +459,9 @@
             ),
 
             // Main Content - Responsivo (padding menor no mobile)
-            React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' }, // Ajuste de altura no mobile
+            React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
 
-                // Modal de Pré-visualização de Impressão (ORIGINAL)
+                // Modal de Pré-visualização de Impressão
                 printPreviewData && React.createElement('div', { 
                     id: 'printable-content',
                     className: 'fixed inset-0 bg-white z-50 overflow-auto p-8'
@@ -524,10 +523,9 @@
                     )
                 ),
 
-                // ==================== DASHBOARD (ORIGINAL) ====================
+                // ==================== DASHBOARD ====================
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
-                // ... Cards e Gráficos do Dashboard ...
                 // Cards de Resumo
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
@@ -609,7 +607,7 @@
                 )
                 ),
 
-                // ==================== ABAS (ORIGINAIS) ====================
+                // ==================== ABAS ====================
                 activeTab === 'realestate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏢 Imobiliárias'),
@@ -1224,13 +1222,11 @@
                 )
                 ),
 
-                // ==================== ABA CONFIGURAÇÕES (MODIFICADA CONFORME SOLICITAÇÃO) ====================
                 activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
 
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                     
-                    // NOVO: Card de Diagnóstico (SUBSTITUI PERFIL)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
@@ -1270,7 +1266,6 @@
                     )
                     ),
 
-                    // MELHORADO: Card de Sistema
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
                     React.createElement('div', { className: 'space-y-4' },
