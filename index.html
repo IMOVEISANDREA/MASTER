@@ -46,7 +46,7 @@
         })();
     </script>
 
-    <!-- CARREGAMENTO ROBUSTO DO TAILWIND (Evita erro de CORS) -->
+    <!-- CARREGAMENTO DO TAILWIND VIA CSS (Evita bloqueio de CORS do script JIT) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
     <!-- React e ReactDOM -->
@@ -58,32 +58,28 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- CSS Customizado - PROTEÇÃO CONTRA IMAGENS GIGANTES -->
+    <!-- CSS Customizado - ESTABILIDADE VISUAL -->
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
       
-      /* Garante que imagens não estourem se o CSS falhar */
+      /* Trava absoluta para evitar imagens gigantes no carregamento */
       img { 
         max-width: 100% !important; 
         height: auto !important; 
         display: block;
       }
       
-      /* Classes de utilidade de emergência (Caso o CDN demore) */
-      .w-20 { width: 5rem !important; }
-      .h-20 { height: 5rem !important; }
-      .w-10 { width: 2.5rem !important; }
-      .h-10 { height: 2.5rem !important; }
-      .mx-auto { margin-left: auto !important; margin-right: auto !important; }
+      /* Classes de tamanho fixo para logotipos */
+      .logo-main { width: 80px !important; height: 80px !important; }
+      .logo-sidebar { width: 40px !important; height: 40px !important; }
 
       #root { min-height: 100vh; }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
       .animate-fade-in { animation: fadeIn 0.3s ease-out; }
       
-      /* Custom scrollbar */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
     </style>
@@ -153,15 +149,23 @@
             const [editData, setEditData] = React.useState(null);
             const [viewingItem, setViewingItem] = React.useState(null);
 
-            // CORREÇÃO: Estrutura de pasta pública para evitar Erro de Permissão e garantir sincronização
+            // CORREÇÃO DE PERMISSÃO: Caminho absoluto obrigatório e verificação de Auth (Regra 1 e 3)
             const getIsolatedCollection = (name, loginOverride) => {
+                // Bloqueia acesso se o Firebase ainda não estiver autenticado
+                if (!firebase.auth().currentUser) return null;
+
                 const appId = 'gestaomaster-cc7a0';
                 const identity = loginOverride || currentLogin;
                 if (!identity) return null;
+                
+                // O caminho deve seguir estritamente: /artifacts/{appId}/public/data/{collectionName}
                 const collectionName = `${identity}_${name}`;
+                
                 return firebase.firestore()
-                    .collection('artifacts').doc(appId)
-                    .collection('public').doc('data')
+                    .collection('artifacts')
+                    .doc(appId)
+                    .collection('public')
+                    .doc('data')
                     .collection(collectionName);
             };
 
@@ -176,25 +180,33 @@
             };
 
             const handleResetCredentials = async () => {
-                if (confirm("⚠️ ATENÇÃO: Apagar credenciais deste usuário? Isso permitirá um novo cadastro de 'Primeiro Acesso'. Use antes de entregar ao cliente.")) {
+                if (confirm("⚠️ ATENÇÃO: Apagar credenciais deste usuário? Isso permitirá um novo cadastro de 'Primeiro Acesso'.")) {
                     try {
-                        await getIsolatedCollection('config_seguranca').doc('status').delete();
-                        alert("✅ Credenciais resetadas!");
-                        window.location.reload();
-                    } catch (e) { alert("Erro ao resetar."); }
+                        const coll = getIsolatedCollection('config_seguranca');
+                        if (coll) {
+                            await coll.doc('status').delete();
+                            alert("✅ Credenciais resetadas!");
+                            window.location.reload();
+                        }
+                    } catch (e) { alert("Erro ao resetar no servidor."); }
                 }
             };
 
+            // Monitoramento de Autenticação
             React.useEffect(() => {
                 const unsubscribeAuth = firebase.auth().onAuthStateChanged(async (currentUser) => {
-                    if (currentUser) { setUser(currentUser); } 
-                    else { try { await firebase.auth().signInAnonymously(); } catch(e) {} }
+                    if (currentUser) { 
+                        setUser(currentUser); 
+                    } else { 
+                        try { await firebase.auth().signInAnonymously(); } catch(e) {} 
+                    }
                 });
                 return () => unsubscribeAuth();
             }, []);
 
+            // Monitoramento de Dados após Login
             React.useEffect(() => {
-                if (!isLogged || !currentLogin) return;
+                if (!isLogged || !currentLogin || !user) return;
 
                 const decryptSnap = (snap) => snap.docs.map(d => {
                     const data = d.data();
@@ -202,34 +214,48 @@
                     return { id: d.id, ...decrypted };
                 });
 
-                const unsubscribers = [
-                    getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliariasList(decryptSnap(snap))),
-                    getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinosList(decryptSnap(snap))),
-                    getIsolatedCollection('imoveis').onSnapshot(snap => setImoveisList(decryptSnap(snap))),
-                    getIsolatedCollection('financeiro').onSnapshot(snap => setFinanceiroList(decryptSnap(snap))),
-                    getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
-                    getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
-                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_notas').onSnapshot(snap => setPessoalNotas(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap))),
-                    getIsolatedCollection('config_seguranca').onSnapshot(snap => {
-                        setHasCredentials(!snap.empty);
-                        if (!snap.empty) {
-                            snap.docs.forEach(doc => {
-                                const data = doc.data();
-                                if (data.pix) setUserPixKey(Security.decrypt(data.pix));
-                            });
-                        }
-                    })
+                const colls = [
+                    { name: 'imobiliarias', setter: setImobiliariasList },
+                    { name: 'inquilinos', setter: setInquilinosList },
+                    { name: 'imoveis', setter: setImoveisList },
+                    { name: 'financeiro', setter: setFinanceiroList },
+                    { name: 'contratos', setter: setContratosList },
+                    { name: 'espolios', setter: setEspoliosList },
+                    { name: 'documentos', setter: setDocumentosList },
+                    { name: 'pessoal_tarefas', setter: setPessoalTarefas },
+                    { name: 'pessoal_notas', setter: setPessoalNotas },
+                    { name: 'pessoal_acessos', setter: setPessoalAcessos },
+                    { name: 'pessoal_compras', setter: setPessoalCompras },
+                    { name: 'pessoal_agenda', setter: setPessoalAgenda },
+                    { name: 'pessoal_contatos', setter: setPessoalContatos }
                 ];
-                return () => unsubscribers.forEach(unsub => unsub());
-            }, [isLogged, currentLogin]);
+
+                const unsubs = colls.map(c => {
+                    const coll = getIsolatedCollection(c.name);
+                    if (coll) {
+                        return coll.onSnapshot(snap => c.setter(decryptSnap(snap)), err => console.error(err));
+                    }
+                    return null;
+                }).filter(u => u !== null);
+
+                // Listener especial para segurança
+                const securityColl = getIsolatedCollection('config_seguranca');
+                const unsubSec = securityColl ? securityColl.onSnapshot(snap => {
+                    setHasCredentials(!snap.empty);
+                    if (!snap.empty) {
+                        snap.docs.forEach(doc => {
+                            const data = doc.data();
+                            if (data.pix) setUserPixKey(Security.decrypt(data.pix));
+                        });
+                    }
+                }) : null;
+
+                return () => {
+                    unsubs.forEach(unsub => unsub());
+                    if (unsubSec) unsubSec();
+                };
+            }, [isLogged, currentLogin, user]);
             
-            const [showEstateForm, setShowEstateForm] = React.useState(false);
             const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
             const [showTenantForm, setShowTenantForm] = React.useState(false);
             const [showPropertyForm, setShowPropertyForm] = React.useState(false);
@@ -237,7 +263,10 @@
 
             const startEditing = (item, openModalFn) => { setEditData(item); setEditingId(item.id); openModalFn(true); };
             const cancelEditing = (closeModalFn) => { setEditData(null); setEditingId(null); closeModalFn(false); };
-            const deleteItem = async (collection, id) => { await getIsolatedCollection(collection).doc(id).delete(); };
+            const deleteItem = async (collection, id) => { 
+                const coll = getIsolatedCollection(collection);
+                if (coll) await coll.doc(id).delete(); 
+            };
 
             const MenuButton = ({ tab, icon, label }) => (
                 React.createElement('button', {
@@ -258,46 +287,53 @@
             );
 
             const handleSaveData = async (collectionName, closeCallback) => {
+                const coll = getIsolatedCollection(collectionName);
+                if (!coll) return;
+
                 const inputs = document.querySelectorAll('input, select, textarea');
                 const rawData = {};
                 inputs.forEach(el => { if (el.name && el.value) rawData[el.name] = el.value; });
                 const encryptedPayload = { payload: Security.encrypt(rawData) };
                 try {
                     if (closeCallback) closeCallback(false);
-                    if (editingId) { await getIsolatedCollection(collectionName).doc(editingId).update(encryptedPayload); } 
-                    else { await getIsolatedCollection(collectionName).add(encryptedPayload); }
+                    if (editingId) { await coll.doc(editingId).update(encryptedPayload); } 
+                    else { await coll.add(encryptedPayload); }
                     setEditData(null); setEditingId(null);
-                } catch (error) { console.error(error); }
+                } catch (error) { alert("Erro ao salvar dados."); }
             };
 
             const handleSaveCredentials = async () => {
                 const loginEl = document.getElementsByName('login_config')[0];
                 const passEl = document.getElementsByName('senha_config')[0];
                 const emailEl = document.getElementsByName('email_recuperacao')[0];
-                const pixEl = document.getElementsByName('pix_config')[0];
 
                 if (!loginEl || !passEl || !loginEl.value || !passEl.value) {
                     alert('⚠️ Defina um login e senha.'); return;
                 }
 
-                if (!firebase.auth().currentUser) { try { await firebase.auth().signInAnonymously(); } catch(e) {} }
+                // Garante que o Firebase está pronto
+                if (!firebase.auth().currentUser) {
+                    try { await firebase.auth().signInAnonymously(); } catch(e) { alert("Erro de rede."); return; }
+                }
 
                 const loginId = loginEl.value.trim().toLowerCase();
                 const credentialData = {
                     login: Security.encrypt(loginId),
                     pass: Security.encrypt(passEl.value),
                     recovery: Security.encrypt(emailEl ? emailEl.value : ''),
-                    pix: Security.encrypt(pixEl ? pixEl.value : ''),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
 
                 try {
-                    await getIsolatedCollection('config_seguranca', loginId).doc('status').set(credentialData);
-                    setCurrentLogin(loginId);
-                    setIsLogged(true);
-                    alert('✅ Acesso configurado!');
-                } catch (e) { alert("Erro de permissão no servidor."); }
+                    const coll = getIsolatedCollection('config_seguranca', loginId);
+                    if (coll) {
+                        await coll.doc('status').set(credentialData);
+                        setCurrentLogin(loginId);
+                        setIsLogged(true);
+                        alert('✅ Acesso configurado!');
+                    }
+                } catch (e) { alert("Erro de permissão no servidor. Tente outro nome de usuário."); }
             };
 
             if (!isLogged) {
@@ -306,7 +342,7 @@
                         React.createElement('div', { className: 'bg-black p-8 text-center border-b-4 border-yellow-500' },
                             React.createElement('img', { 
                                 src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', 
-                                className: 'w-20 h-20 mx-auto mb-4' 
+                                className: 'logo-main mx-auto mb-4' 
                             }),
                             React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase' }, 'GESTÃO MASTER'),
                             React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, 'Controle Administrativo Profissional')
@@ -322,13 +358,14 @@
                                         if (!loginVal) { alert("Informe seu usuário."); return; }
                                         if (!firebase.auth().currentUser) { try { await firebase.auth().signInAnonymously(); } catch(e) {} }
                                         try {
-                                            const configSnap = await getIsolatedCollection('config_seguranca', loginVal).doc('status').get();
-                                            if (configSnap.exists) {
+                                            const coll = getIsolatedCollection('config_seguranca', loginVal);
+                                            const configSnap = coll ? await coll.doc('status').get() : null;
+                                            if (configSnap && configSnap.exists) {
                                                 const decryptedPass = Security.decrypt(configSnap.data().pass);
                                                 if (passVal === decryptedPass) { setCurrentLogin(loginVal); setIsLogged(true); } 
                                                 else { alert("❌ Senha incorreta."); }
-                                            } else { alert("❌ Usuário não encontrado. Se for o primeiro acesso, use o botão abaixo."); }
-                                        } catch (e) { alert("Erro de conexão."); }
+                                            } else { alert("❌ Usuário não encontrado."); }
+                                        } catch (e) { alert("Erro de conexão com o servidor."); }
                                     },
                                     className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase shadow-lg hover:bg-gray-800 transition'
                                 }, 'Entrar no Sistema'),
@@ -357,7 +394,7 @@
                     React.createElement('div', { className: 'mb-8 flex items-center justify-center md:block text-center' },
                         React.createElement('img', { 
                             src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', 
-                            className: 'w-10 h-10 md:w-16 md:h-16 mr-3 md:mx-auto md:mb-3' 
+                            className: 'logo-sidebar mx-auto mb-3' 
                         }),
                         React.createElement('div', null, 
                             React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'), 
@@ -377,7 +414,7 @@
                 ),
                 React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
                     activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        !hasCredentials && showSafetyWarning && React.createElement('div', { onClick: () => setShowSafetyWarning(false), className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce' }, React.createElement('div', { className: 'text-3xl' }, '⚠️'), React.createElement('div', null, React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm' }, 'Ação Necessária'), React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Cadastre seu Login e Senha em Configurações agora.'))),
+                        !hasCredentials && showSafetyWarning && React.createElement('div', { onClick: () => setShowSafetyWarning(false), className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer' }, React.createElement('div', { className: 'text-3xl' }, '⚠️'), React.createElement('div', null, React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm' }, 'Ação Necessária'), React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Finalize sua configuração em Configurações.'))),
                         React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
                             React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' }, React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Total de Imóveis'), React.createElement('p', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)),
@@ -387,7 +424,7 @@
                         ),
                         React.createElement('div', { className: 'bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6' },
                             React.createElement('div', { className: 'flex items-center gap-5' }, React.createElement('div', { className: 'text-5xl' }, '🆘'), React.createElement('div', null, React.createElement('h4', { className: 'text-2xl font-black uppercase' }, 'Suporte'), React.createElement('p', { className: 'text-blue-100 opacity-90' }, 'Fale com a equipe técnica Adriana Mendes Cruz Sousa.'))),
-                            React.createElement('button', { onClick: () => window.open('https://wa.me/5511932186193', '_blank'), className: 'bg-white text-blue-700 px-10 py-4 rounded-xl font-black shadow-lg hover:bg-blue-50 transition' }, 'CHAMAR WHATSAPP')
+                            React.createElement('button', { onClick: () => window.open('https://wa.me/5511932186193', '_blank'), className: 'bg-white text-blue-700 px-10 py-4 rounded-xl font-black shadow-lg hover:bg-blue-50 transition' }, 'WHATSAPP')
                         )
                     ),
                     activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
@@ -401,13 +438,13 @@
                                     React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500' })),
                                     React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Chave PIX'), React.createElement('input', { type: 'text', name: 'pix_config', defaultValue: userPixKey, className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500 bg-yellow-50' }))
                                 ),
-                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase mt-6 shadow-lg' }, 'Salvar Alterações')
+                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase mt-6 shadow-lg hover:bg-gray-800 transition' }, 'Salvar Alterações')
                             ),
                             React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                                 React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
                                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
-                                    React.createElement('button', { onClick: hardAppReset, className: 'w-full bg-gray-600 text-white px-4 py-4 rounded-lg font-bold text-sm' }, '🔄 ATUALIZAR SISTEMA'),
-                                    React.createElement('button', { onClick: handleResetCredentials, className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm' }, '⚠️ RESETAR PARA O CLIENTE')
+                                    React.createElement('button', { onClick: hardAppReset, className: 'w-full bg-gray-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-gray-700 transition shadow' }, '🔄 ATUALIZAR SISTEMA'),
+                                    React.createElement('button', { onClick: handleResetCredentials, className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow' }, '⚠️ RESETAR PARA O CLIENTE')
                                 )
                             )
                         )
