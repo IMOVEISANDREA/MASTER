@@ -7,43 +7,34 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Gestão Master">
-    <meta name="description" content="Sistema de Gestão Master - Andrea Macarron">
-
+    
     <title>GESTÃO MASTER - Andrea Macarron</title>
 
     <!-- PWA -->
     <script>
         (function() {
             const iconURL = "https://cdn-icons-png.flaticon.com/512/3079/3079645.png";
-            const manifest = {
-                "name": "Gestão Master - Andrea Macarron",
-                "short_name": "Gestão Master",
-                "display": "standalone",
-                "start_url": "./",
-                "background_color": "#1f2937",
-                "theme_color": "#eab308",
-                "icons": [{ "src": iconURL, "sizes": "512x512", "type": "image/png" }]
-            };
-            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-            const linkManifest = document.createElement('link');
-            linkManifest.rel = 'manifest';
-            linkManifest.href = URL.createObjectURL(manifestBlob);
-            document.head.appendChild(linkManifest);
             const linkIcon = document.createElement('link');
             linkIcon.rel = 'icon';
             linkIcon.href = iconURL;
             document.head.appendChild(linkIcon);
+            
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js').catch(() => {});
+                });
+            }
         })();
     </script>
 
-    <!-- CSS ESTÁVEL (EVITA ERRO DE CORS E IMAGEM GIGANTE) -->
+    <!-- CSS (Correção Visual Definitiva) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
-    <!-- React e ReactDOM -->
+    <!-- React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- FIREBASE SDKs -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -51,18 +42,13 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
-      
-      /* PREVENÇÃO DE IMAGENS GIGANTES */
+      body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
       img { max-width: 100% !important; height: auto !important; display: block; }
-      .logo-main { width: 80px !important; height: 80px !important; object-fit: contain; margin-left: auto; margin-right: auto; }
+      .logo-main { width: 80px !important; height: 80px !important; object-fit: contain; margin: 0 auto 1rem; }
       .logo-sidebar { width: 48px !important; height: 48px !important; object-fit: contain; }
-
       #root { min-height: 100vh; }
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       .animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 
@@ -72,17 +58,14 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         
-        // CONFIGURAÇÃO DINÂMICA PARA EVITAR ERRO DE PERMISSÃO
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDW9gF4k0e2XuMbcgKouyIUmo3uaUxLheE",
-                authDomain: "gestaomaster-cc7a0.firebaseapp.com",
-                projectId: "gestaomaster-cc7a0",
-                storageBucket: "gestaomaster-cc7a0.firebasestorage.app",
-                messagingSenderId: "61242084578",
-                appId: "1:61242084578:web:e1f4fd6a1287bfd3b422bb"
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW9gF4k0e2XuMbcgKouyIUmo3uaUxLheE",
+            authDomain: "gestaomaster-cc7a0.firebaseapp.com",
+            projectId: "gestaomaster-cc7a0",
+            storageBucket: "gestaomaster-cc7a0.firebasestorage.app",
+            messagingSenderId: "61242084578",
+            appId: "1:61242084578:web:e1f4fd6a1287bfd3b422bb"
+        };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -90,16 +73,10 @@
         }
 
         const Security = {
-            encrypt: (data) => {
-                if (!data) return '';
-                const str = typeof data === 'object' ? JSON.stringify(data) : String(data);
-                return btoa(unescape(encodeURIComponent(str)));
-            },
-            decrypt: (encryptedData) => {
-                try {
-                    if (!encryptedData) return '';
-                    return JSON.parse(decodeURIComponent(escape(atob(encryptedData))));
-                } catch (e) { return encryptedData; }
+            encrypt: (data) => btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
+            decrypt: (data) => {
+                try { return JSON.parse(decodeURIComponent(escape(atob(data)))); } 
+                catch (e) { return data; }
             }
         };
 
@@ -115,6 +92,7 @@
             const [userPixKey, setUserPixKey] = React.useState('');
             const [viewingRecibo, setViewingRecibo] = React.useState(null);
 
+            // Estados de Dados
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
             const [inquilinosList, setInquilinosList] = React.useState([]);
             const [imoveisList, setImoveisList] = React.useState([]);
@@ -133,32 +111,24 @@
             const [editData, setEditData] = React.useState(null);
             const [viewingItem, setViewingItem] = React.useState(null);
 
-            // CORREÇÃO DE PERMISSÃO: Caminho absoluto obrigatório para sincronização (RULE 1)
+            // COLEÇÃO ISOLADA POR LOGIN (Compatível com as novas Regras)
             const getIsolatedCollection = (name, loginOverride) => {
-                // RULE 3: Guardar operação se não estiver autenticado
                 if (!firebase.auth().currentUser) return null;
-
-                // Captura o AppId dinâmico do ambiente
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                const appId = 'gestaomaster-cc7a0';
                 const identity = loginOverride || currentLogin;
                 if (!identity) return null;
                 
-                // Para sincronizar dispositivos diferentes, usamos o Login como parte do nome da coleção pública
-                const collectionName = `${identity}_${name}`;
-                
-                // Caminho: /artifacts/{appId}/public/data/{collectionName}
+                // Agora acessamos diretamente a pasta do usuário pelo nome do login
                 return firebase.firestore()
                     .collection('artifacts')
                     .doc(appId)
-                    .collection('public')
-                    .doc('data')
-                    .collection(collectionName);
+                    .collection('users')
+                    .doc(identity)
+                    .collection(name);
             };
 
             const hardAppReset = async () => {
-                if (confirm("Limpar cache e atualizar sistema?")) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let reg of registrations) { await reg.unregister(); }
+                if (confirm("Limpar cache e atualizar?")) {
                     if (window.caches) {
                         const names = await caches.keys();
                         await Promise.all(names.map(n => caches.delete(n)));
@@ -168,47 +138,34 @@
             };
 
             const handleResetCredentials = async () => {
-                if (confirm("⚠️ ATENÇÃO: Apagar credenciais de acesso? Isso permitirá um novo cadastro inicial.")) {
+                if (confirm("⚠️ RESETAR CREDENCIAIS? Isso apagará o acesso atual.")) {
                     try {
                         const coll = getIsolatedCollection('config_seguranca');
-                        if (coll) {
-                            await coll.doc('status').delete();
-                            alert("✅ Credenciais resetadas!");
-                            window.location.reload();
-                        }
-                    } catch (e) { alert("Erro de permissão ao resetar."); }
+                        if (coll) await coll.doc('status').delete();
+                        alert("✅ Resetado! Recarregando...");
+                        window.location.reload();
+                    } catch (e) { alert("Erro de permissão. Verifique as Rules."); }
                 }
             };
 
-            // RULE 3: Autenticação obrigatória antes de qualquer consulta
+            // Auth Anônima Obrigatória
             React.useEffect(() => {
-                const initFirebase = async () => {
+                const init = async () => {
                     if (!firebase.auth().currentUser) {
-                        try {
-                            await firebase.auth().signInAnonymously();
-                        } catch (e) { console.error("Erro no Login Anônimo", e); }
+                        try { await firebase.auth().signInAnonymously(); } catch(e) {}
                     }
-                    setUser(firebase.auth().currentUser);
                 };
-                initFirebase();
-
-                const unsubscribeAuth = firebase.auth().onAuthStateChanged((currentUser) => {
-                    setUser(currentUser);
-                });
-                return () => unsubscribeAuth();
+                init();
+                return firebase.auth().onAuthStateChanged(u => setUser(u));
             }, []);
 
-            // Sincronização em Tempo Real (Apenas se logado e autenticado)
+            // Sync de Dados
             React.useEffect(() => {
                 if (!isLogged || !currentLogin || !user) return;
 
-                const decryptSnap = (snap) => snap.docs.map(d => {
-                    const data = d.data();
-                    const decrypted = data.payload ? Security.decrypt(data.payload) : data;
-                    return { id: d.id, ...decrypted };
-                });
-
-                const syncList = [
+                const dec = (snap) => snap.docs.map(d => ({ id: d.id, ...Security.decrypt(d.data().payload) }));
+                
+                const collections = [
                     { n: 'imobiliarias', s: setImobiliariasList },
                     { n: 'inquilinos', s: setInquilinosList },
                     { n: 'imoveis', s: setImoveisList },
@@ -224,27 +181,23 @@
                     { n: 'pessoal_contatos', s: setPessoalContatos }
                 ];
 
-                const unsubs = syncList.map(c => {
+                const unsubs = collections.map(c => {
                     const coll = getIsolatedCollection(c.n);
-                    if (coll) return coll.onSnapshot(snap => c.s(decryptSnap(snap)), err => console.log("Erro de permissão no sync", err));
-                    return null;
-                }).filter(u => u !== null);
+                    return coll ? coll.onSnapshot(s => c.s(dec(s)), e => console.log("Sync error:", e)) : null;
+                }).filter(u => u);
 
-                const securityColl = getIsolatedCollection('config_seguranca');
-                const unsubSec = securityColl ? securityColl.onSnapshot(snap => {
-                    setHasCredentials(!snap.empty);
-                    if (!snap.empty) {
-                        snap.docs.forEach(doc => {
-                            const data = doc.data();
-                            if (data.pix) setUserPixKey(Security.decrypt(data.pix));
-                        });
-                    }
-                }) : null;
+                const conf = getIsolatedCollection('config_seguranca');
+                if (conf) {
+                    unsubs.push(conf.onSnapshot(s => {
+                        setHasCredentials(!s.empty);
+                        if (!s.empty) {
+                            const d = s.docs[0].data();
+                            if (d.pix) setUserPixKey(Security.decrypt(d.pix));
+                        }
+                    }));
+                }
 
-                return () => {
-                    unsubs.forEach(unsub => unsub());
-                    if (unsubSec) unsubSec();
-                };
+                return () => unsubs.forEach(u => u());
             }, [isLogged, currentLogin, user]);
             
             const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
@@ -283,13 +236,14 @@
                 const inputs = document.querySelectorAll('input, select, textarea');
                 const rawData = {};
                 inputs.forEach(el => { if (el.name && el.value) rawData[el.name] = el.value; });
-                const encryptedPayload = { payload: Security.encrypt(rawData) };
+                const payload = Security.encrypt(rawData);
+                
                 try {
                     if (closeCallback) closeCallback(false);
-                    if (editingId) { await coll.doc(editingId).update(encryptedPayload); } 
-                    else { await coll.add(encryptedPayload); }
+                    if (editingId) await coll.doc(editingId).update({ payload });
+                    else await coll.add({ payload, createdAt: new Date().toISOString() });
                     setEditData(null); setEditingId(null);
-                } catch (error) { alert("Sem permissão para salvar."); }
+                } catch (e) { alert("Erro ao salvar. Verifique as Rules."); }
             };
 
             const handleSaveCredentials = async () => {
@@ -297,20 +251,17 @@
                 const passEl = document.getElementsByName('senha_config')[0];
                 const emailEl = document.getElementsByName('email_recuperacao')[0];
 
-                if (!loginEl || !passEl || !loginEl.value || !passEl.value) {
-                    alert('⚠️ Informe um login e senha.'); return;
-                }
+                if (!loginEl?.value || !passEl?.value) { alert('Defina login e senha.'); return; }
 
-                // RULE 3: Força Auth antes de gravar
                 if (!firebase.auth().currentUser) {
                     try { await firebase.auth().signInAnonymously(); } catch(e) { alert("Sem conexão."); return; }
                 }
 
                 const loginId = loginEl.value.trim().toLowerCase();
-                const credentialData = {
+                const data = {
                     login: Security.encrypt(loginId),
                     pass: Security.encrypt(passEl.value),
-                    recovery: Security.encrypt(emailEl ? emailEl.value : ''),
+                    recovery: Security.encrypt(emailEl?.value || ''),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
@@ -318,23 +269,20 @@
                 try {
                     const coll = getIsolatedCollection('config_seguranca', loginId);
                     if (coll) {
-                        await coll.doc('status').set(credentialData);
+                        await coll.doc('status').set(data);
                         setCurrentLogin(loginId);
                         setIsLogged(true);
-                        alert('✅ Acesso Gravado!');
+                        alert('✅ Configurado com sucesso!');
                     }
-                } catch (e) { alert("Erro de permissão no servidor. Este usuário já pode estar em uso ou verifique seu Rules."); }
+                } catch (e) { alert("Erro de permissão. ATENÇÃO: Atualize o arquivo 'firestore.rules' no console do Firebase."); }
             };
 
             if (!isLogged) {
                 return React.createElement('div', { className: 'min-h-screen bg-gray-900 flex items-center justify-center p-4 animate-fade-in' },
                     React.createElement('div', { className: 'bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden' },
                         React.createElement('div', { className: 'bg-black p-8 text-center border-b-4 border-yellow-500' },
-                            React.createElement('img', { 
-                                src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', 
-                                className: 'logo-main mb-4' 
-                            }),
-                            React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase tracking-tighter' }, 'GESTÃO MASTER'),
+                            React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', className: 'logo-main' }),
+                            React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase' }, 'GESTÃO MASTER'),
                             React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, 'Controle Administrativo Profissional')
                         ),
                         React.createElement('div', { className: 'p-8 space-y-6' },
@@ -345,32 +293,30 @@
                                     onClick: async () => {
                                         const loginVal = document.getElementById('login_identity_input').value.trim().toLowerCase();
                                         const passVal = document.getElementById('login_password_input').value;
-                                        if (!loginVal) { alert("Informe seu usuário."); return; }
+                                        if (!loginVal) { alert("Informe usuário."); return; }
                                         
-                                        // Garante Auth
-                                        if (!firebase.auth().currentUser) { try { await firebase.auth().signInAnonymously(); } catch(e) {} }
+                                        if (!firebase.auth().currentUser) try { await firebase.auth().signInAnonymously(); } catch(e) {}
 
                                         try {
                                             const coll = getIsolatedCollection('config_seguranca', loginVal);
-                                            const configSnap = coll ? await coll.doc('status').get() : null;
-                                            if (configSnap && configSnap.exists) {
-                                                const decryptedPass = Security.decrypt(configSnap.data().pass);
-                                                if (passVal === decryptedPass) { setCurrentLogin(loginVal); setIsLogged(true); } 
+                                            const snap = coll ? await coll.doc('status').get() : null;
+                                            if (snap && snap.exists) {
+                                                if (passVal === Security.decrypt(snap.data().pass)) { setCurrentLogin(loginVal); setIsLogged(true); }
                                                 else { alert("❌ Senha incorreta."); }
-                                            } else { alert("❌ Usuário não cadastrado."); }
-                                        } catch (e) { alert("Erro de conexão com o banco de dados."); }
+                                            } else { alert("❌ Usuário não encontrado."); }
+                                        } catch (e) { alert("Erro de conexão. Verifique as regras do Firebase."); }
                                     },
-                                    className: 'w-full bg-black text-yellow-500 py-4 rounded-2xl font-black uppercase shadow-xl hover:bg-gray-800 transition transform active:scale-95'
-                                }, 'Entrar no Sistema'),
+                                    className: 'w-full bg-black text-yellow-500 py-4 rounded-2xl font-black uppercase shadow-xl hover:bg-gray-800 transition'
+                                }, 'Entrar'),
                                 React.createElement('button', { onClick: () => setIsRegistering(true), className: 'w-full text-gray-500 text-xs font-black uppercase hover:text-yellow-600 transition' }, 'PRIMEIRO ACESSO? CADASTRE-SE AQUI')
                             ) : React.createElement(React.Fragment, null,
-                                React.createElement('div', { className: 'bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200 text-[10px] text-yellow-800 font-bold uppercase text-center' }, 'Criação de Pasta Segura na Nuvem'),
+                                React.createElement('div', { className: 'bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200 text-center text-xs font-bold text-yellow-800' }, 'Configuração Inicial de Pasta Segura'),
                                 React.createElement('div', { className: 'grid grid-cols-1 gap-4' },
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Escolher Usuário'), React.createElement('input', { type: 'text', name: 'login_config', placeholder: 'Ex: admin_andrea', className: 'w-full px-4 py-2 border rounded-xl' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Escolher Senha'), React.createElement('input', { type: 'password', name: 'senha_config', placeholder: '••••••••', className: 'w-full px-4 py-2 border rounded-xl' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'E-mail Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', placeholder: 'seu@email.com', className: 'w-full px-4 py-2 border rounded-xl' }))
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Novo Usuário'), React.createElement('input', { name: 'login_config', className: 'w-full px-4 py-2 border rounded-lg' })),
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Nova Senha'), React.createElement('input', { type: 'password', name: 'senha_config', className: 'w-full px-4 py-2 border rounded-lg' })),
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'E-mail Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-2 border rounded-lg' }))
                                 ),
-                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-yellow-500 text-black py-4 rounded-2xl font-black uppercase mt-4 shadow-xl hover:bg-yellow-600 transition' }, 'CRIAR ACESSO E ACESSAR'),
+                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-yellow-500 text-black py-4 rounded-2xl font-black uppercase mt-4 shadow-xl hover:bg-yellow-600 transition' }, 'CRIAR ACESSO'),
                                 React.createElement('button', { onClick: () => setIsRegistering(false), className: 'w-full text-gray-500 text-xs font-black uppercase mt-2' }, 'VOLTAR')
                             )
                         ),
