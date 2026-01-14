@@ -3,110 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- META TAGS PWA - COMPLETAS -->
     <meta name="theme-color" content="#eab308">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gestão Master">
-    <meta name="description" content="Sistema de Gestão Master - Andrea Macarron">
-
+    
     <title>GESTÃO MASTER - Andrea Macarron</title>
 
-    <!-- PWA IMPLEMENTATION -->
+    <!-- PWA -->
     <script>
         (function() {
             const iconURL = "https://cdn-icons-png.flaticon.com/512/3079/3079645.png";
-            const manifest = {
-                "name": "Gestão Master - Andrea Macarron",
-                "short_name": "Gestão Master",
-                "description": "Sistema de Gestão Administrativa Master",
-                "start_url": "./",
-                "scope": "/",
-                "display": "standalone",
-                "orientation": "portrait-primary",
-                "background_color": "#1f2937",
-                "theme_color": "#eab308",
-                "icons": [
-                    { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-                ],
-                "categories": ["business", "productivity"],
-                "lang": "pt-BR",
-                "dir": "ltr"
-            };
-
-            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(manifestBlob);
-            const linkManifest = document.createElement('link');
-            linkManifest.rel = 'manifest';
-            linkManifest.href = manifestURL;
-            document.head.appendChild(linkManifest);
-
             const linkIcon = document.createElement('link');
             linkIcon.rel = 'icon';
-            linkIcon.type = 'image/png';
             linkIcon.href = iconURL;
             document.head.appendChild(linkIcon);
-
+            
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('./sw.js').catch(function(err) {});
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js').catch(() => {});
                 });
             }
         })();
     </script>
 
-    <!-- Tailwind CSS CDN (MANTIDO ORIGINAL) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CSS (Correção Visual Definitiva) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
-    <!-- React e ReactDOM -->
+    <!-- React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- FIREBASE SDKs -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- CSS Customizado -->
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-      * { margin: 0; padding: 0; box-sizing: border-box; max-width: 100%; }
-      html, body { width: 100%; max-width: 100vw; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-tap-highlight-color: transparent;
-      }
-      #root { width: 100%; min-height: 100vh; overflow-x: hidden; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-      html { scroll-behavior: smooth; }
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: #f1f1f1; }
-      ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #ca8a04; }
-      button:focus, input:focus, textarea:focus, select:focus { outline: none; }
-      button:active { transform: scale(0.98); transition: transform 0.1s; }
-      img { max-width: 100%; height: auto; display: block; }
-      @supports (-webkit-touch-callout: none) { body { min-height: -webkit-fill-available; } }
-      input, textarea, select { font-size: 16px !important; }
-      .flex, .grid { min-width: 0; }
-      @media print {
-        .no-print { display: none !important; }
-        body { background: white !important; }
-        .print-content { visibility: visible !important; position: absolute; left: 0; top: 0; width: 100%; }
-        #printable-area { visibility: visible !important; }
-      }
-      @media (max-width: 768px) {
-        * { word-wrap: break-word; overflow-wrap: break-word; }
-        .px-6, .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+      img { max-width: 100% !important; height: auto !important; display: block; }
+      .logo-main { width: 80px !important; height: 80px !important; object-fit: contain; margin: 0 auto 1rem; }
+      .logo-sidebar { width: 48px !important; height: 48px !important; object-fit: contain; }
+      #root { min-height: 100vh; }
+      .animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
-  </head>
+</head>
 
 <body>
     <div id="root"></div>
@@ -114,7 +58,6 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         
-        // CONFIGURAÇÃO REAL DO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDW9gF4k0e2XuMbcgKouyIUmo3uaUxLheE",
             authDomain: "gestaomaster-cc7a0.firebaseapp.com",
@@ -125,19 +68,15 @@
         };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                firebase.firestore().enablePersistence({synchronizeTabs: true}).catch(err => console.log("Persistence Error:", err.code));
-            } catch (e) {
-                console.error("Erro ao inicializar Firebase:", e);
-            }
+            firebase.initializeApp(firebaseConfig);
+            firebase.firestore().enablePersistence({synchronizeTabs: true}).catch(() => {});
         }
 
         const Security = {
             encrypt: (data) => btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
-            decrypt: (encryptedData) => {
-                try { return JSON.parse(decodeURIComponent(escape(atob(encryptedData)))); } 
-                catch (e) { return encryptedData; }
+            decrypt: (data) => {
+                try { return JSON.parse(decodeURIComponent(escape(atob(data)))); } 
+                catch (e) { return data; }
             }
         };
 
@@ -147,12 +86,13 @@
             const [isLogged, setIsLogged] = React.useState(false); 
             const [isRegistering, setIsRegistering] = React.useState(false);
             const [currentLogin, setCurrentLogin] = React.useState(''); 
-            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); 
             const [hasCredentials, setHasCredentials] = React.useState(true);
+            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true);
             
             const [userPixKey, setUserPixKey] = React.useState('');
             const [viewingRecibo, setViewingRecibo] = React.useState(null);
 
+            // Estados de Dados
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
             const [inquilinosList, setInquilinosList] = React.useState([]);
             const [imoveisList, setImoveisList] = React.useState([]);
@@ -171,206 +111,177 @@
             const [editData, setEditData] = React.useState(null);
             const [viewingItem, setViewingItem] = React.useState(null);
 
-            const [isScanning, setIsScanning] = React.useState(true);
-            const [scanResult, setScanResult] = React.useState({ db: 'pendente', auth: 'pendente', modules: 'pendente', latency: '...' });
-            const [lastScan, setLastScan] = React.useState(null);
-
-            // --- LÓGICA DE SINCRONIZAÇÃO VIA LOGIN (CORREÇÃO DE PERMISSÃO) ---
+            // COLEÇÃO ISOLADA POR LOGIN (Compatível com as novas Regras)
             const getIsolatedCollection = (name, loginOverride) => {
+                if (!firebase.auth().currentUser) return null;
                 const appId = 'gestaomaster-cc7a0';
                 const identity = loginOverride || currentLogin;
-                if (!identity || !firebase.auth().currentUser) return null;
+                if (!identity) return null;
                 
-                // Usando o caminho de dados públicos mas isolado pelo prefixo do Login
-                // Isso resolve o erro de permissão e permite sincronização entre aparelhos
-                const collectionName = `${identity}_${name}`;
-                
+                // Agora acessamos diretamente a pasta do usuário pelo nome do login
                 return firebase.firestore()
                     .collection('artifacts')
                     .doc(appId)
-                    .collection('public')
-                    .doc('data')
-                    .collection(collectionName);
-            };
-
-            const runDiagnostic = async () => {
-                setIsScanning(true);
-                const start = performance.now();
-                let results = { db: 'ok', auth: 'ok', modules: 'ok', latency: '0ms' };
-                try {
-                    try {
-                        const dbCheck = firebase.firestore().collection('_health_check').doc('status').get();
-                        await Promise.race([dbCheck, new Promise((_, r) => setTimeout(() => r('timeout'), 2000))]);
-                        results.db = 'operacional';
-                    } catch (e) { results.db = 'conectado'; }
-                    results.auth = firebase.auth().currentUser ? 'autenticado' : 'anónimo';
-                    results.modules = (typeof React !== 'undefined') ? 'estável' : 'falha';
-                } catch (err) { console.error("Erro no diagnóstico:", err); }
-                const end = performance.now();
-                results.latency = Math.round(end - start) + 'ms';
-                setScanResult(results);
-                setLastScan(new Date().toLocaleString('pt-BR'));
-                setIsScanning(false);
+                    .collection('users')
+                    .doc(identity)
+                    .collection(name);
             };
 
             const hardAppReset = async () => {
-                if (confirm("Limpar cache e atualizar o sistema?")) {
-                    try {
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        for (let reg of registrations) { await reg.unregister(); }
-                        if (window.caches) {
-                            const names = await caches.keys();
-                            await Promise.all(names.map(n => caches.delete(n)));
-                        }
-                        window.location.reload(true);
-                    } catch (e) { console.error("Erro ao limpar.", e); }
+                if (confirm("Limpar cache e atualizar?")) {
+                    if (window.caches) {
+                        const names = await caches.keys();
+                        await Promise.all(names.map(n => caches.delete(n)));
+                    }
+                    window.location.reload(true);
                 }
             };
 
             const handleResetCredentials = async () => {
-                if (confirm("⚠️ ATENÇÃO: Deseja apagar todas as credenciais deste usuário? Use isso apenas antes de entregar ao cliente.")) {
+                if (confirm("⚠️ RESETAR CREDENCIAIS? Isso apagará o acesso atual.")) {
                     try {
                         const coll = getIsolatedCollection('config_seguranca');
-                        if (coll) {
-                            await coll.doc('status').delete();
-                            alert("✅ Credenciais resetadas! Reiniciando...");
-                            window.location.reload();
-                        }
-                    } catch (e) { alert("Erro ao tentar resetar credenciais."); }
+                        if (coll) await coll.doc('status').delete();
+                        alert("✅ Resetado! Recarregando...");
+                        window.location.reload();
+                    } catch (e) { alert("Erro de permissão. Verifique as Rules."); }
                 }
             };
 
+            // Auth Anônima Obrigatória
             React.useEffect(() => {
-                const unsubscribeAuth = firebase.auth().onAuthStateChanged(async (currentUser) => {
-                    if (currentUser) {
-                        setUser(currentUser);
-                    } else {
+                const init = async () => {
+                    if (!firebase.auth().currentUser) {
                         try { await firebase.auth().signInAnonymously(); } catch(e) {}
                     }
-                });
-                runDiagnostic();
-                return () => unsubscribeAuth();
+                };
+                init();
+                return firebase.auth().onAuthStateChanged(u => setUser(u));
             }, []);
 
+            // Sync de Dados
             React.useEffect(() => {
                 if (!isLogged || !currentLogin || !user) return;
 
-                const decryptSnap = (snap) => snap.docs.map(d => {
-                    const data = d.data();
-                    const decrypted = data.payload ? Security.decrypt(data.payload) : data;
-                    return { id: d.id, ...decrypted };
-                });
-
+                const dec = (snap) => snap.docs.map(d => ({ id: d.id, ...Security.decrypt(d.data().payload) }));
+                
                 const collections = [
-                    { name: 'imobiliarias', set: setImobiliariasList },
-                    { name: 'inquilinos', set: setInquilinosList },
-                    { name: 'imoveis', set: setImoveisList },
-                    { name: 'financeiro', set: setFinanceiroList },
-                    { name: 'contratos', set: setContratosList },
-                    { name: 'espolios', set: setEspoliosList },
-                    { name: 'documentos', set: setDocumentosList },
-                    { name: 'pessoal_tarefas', set: setPessoalTarefas },
-                    { name: 'pessoal_notas', set: setPessoalNotas },
-                    { name: 'pessoal_acessos', set: setPessoalAcessos },
-                    { name: 'pessoal_compras', set: setPessoalCompras },
-                    { name: 'pessoal_agenda', set: setPessoalAgenda },
-                    { name: 'pessoal_contatos', set: setPessoalContatos }
+                    { n: 'imobiliarias', s: setImobiliariasList },
+                    { n: 'inquilinos', s: setInquilinosList },
+                    { n: 'imoveis', s: setImoveisList },
+                    { n: 'financeiro', s: setFinanceiroList },
+                    { n: 'contratos', s: setContratosList },
+                    { n: 'espolios', s: setEspoliosList },
+                    { n: 'documentos', s: setDocumentosList },
+                    { n: 'pessoal_tarefas', s: setPessoalTarefas },
+                    { n: 'pessoal_notas', s: setPessoalNotas },
+                    { n: 'pessoal_acessos', s: setPessoalAcessos },
+                    { n: 'pessoal_compras', s: setPessoalCompras },
+                    { n: 'pessoal_agenda', s: setPessoalAgenda },
+                    { n: 'pessoal_contatos', s: setPessoalContatos }
                 ];
 
-                const unsubscribers = collections.map(c => {
-                    const coll = getIsolatedCollection(c.name);
-                    return coll ? coll.onSnapshot(snap => c.set(decryptSnap(snap)), err => console.error("Sync error", err)) : null;
-                }).filter(u => u !== null);
+                const unsubs = collections.map(c => {
+                    const coll = getIsolatedCollection(c.n);
+                    return coll ? coll.onSnapshot(s => c.s(dec(s)), e => console.log("Sync error:", e)) : null;
+                }).filter(u => u);
 
-                const configColl = getIsolatedCollection('config_seguranca');
-                if (configColl) {
-                    unsubscribers.push(configColl.onSnapshot(snap => {
-                        setHasCredentials(!snap.empty);
-                        if (!snap.empty) {
-                            const data = snap.docs[0].data();
-                            if (data.pix) setUserPixKey(Security.decrypt(data.pix));
+                const conf = getIsolatedCollection('config_seguranca');
+                if (conf) {
+                    unsubs.push(conf.onSnapshot(s => {
+                        setHasCredentials(!s.empty);
+                        if (!s.empty) {
+                            const d = s.docs[0].data();
+                            if (d.pix) setUserPixKey(Security.decrypt(d.pix));
                         }
                     }));
                 }
 
-                return () => unsubscribers.forEach(unsub => unsub());
+                return () => unsubs.forEach(u => u());
             }, [isLogged, currentLogin, user]);
             
-            // --- FUNÇÕES DE FORMULÁRIO E SALVAMENTO ---
+            const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
+            const [showTenantForm, setShowTenantForm] = React.useState(false);
+            const [showPropertyForm, setShowPropertyForm] = React.useState(false);
+            const [showFinanceForm, setShowFinanceForm] = React.useState(false);
+
+            const startEditing = (item, openModalFn) => { setEditData(item); setEditingId(item.id); openModalFn(true); };
+            const cancelEditing = (closeModalFn) => { setEditData(null); setEditingId(null); closeModalFn(false); };
+            const deleteItem = async (collection, id) => { 
+                const coll = getIsolatedCollection(collection);
+                if (coll) await coll.doc(id).delete(); 
+            };
+
+            const MenuButton = ({ tab, icon, label }) => (
+                React.createElement('button', {
+                    onClick: () => setActiveTab(tab),
+                    className: `flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-yellow-500 text-black font-bold' : 'text-gray-400 hover:bg-gray-800'}`
+                }, React.createElement('span', { className: 'text-lg' }, icon), React.createElement('span', null, label))
+            );
+
+            const FormInput = ({ label, type = "text", name, placeholder }) => (
+                React.createElement('div', { className: 'mb-4' },
+                    React.createElement('label', { className: 'block text-xs font-bold text-gray-700 mb-1 uppercase' }, label),
+                    React.createElement('input', { 
+                        type, name, placeholder,
+                        defaultValue: editData ? editData[name] : '',
+                        className: 'w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-yellow-500'
+                    })
+                )
+            );
+
             const handleSaveData = async (collectionName, closeCallback) => {
+                const coll = getIsolatedCollection(collectionName);
+                if (!coll) return;
                 const inputs = document.querySelectorAll('input, select, textarea');
                 const rawData = {};
-                let hasData = false;
-                inputs.forEach(el => { if (el.name && el.value) { rawData[el.name] = el.value; hasData = true; } });
-                if (!hasData) return;
+                inputs.forEach(el => { if (el.name && el.value) rawData[el.name] = el.value; });
+                const payload = Security.encrypt(rawData);
                 
-                const encryptedPayload = { payload: Security.encrypt(rawData) };
                 try {
-                    const coll = getIsolatedCollection(collectionName);
-                    if (!coll) return;
                     if (closeCallback) closeCallback(false);
-                    if (editingId) await coll.doc(editingId).update(encryptedPayload);
-                    else await coll.add(encryptedPayload);
+                    if (editingId) await coll.doc(editingId).update({ payload });
+                    else await coll.add({ payload, createdAt: new Date().toISOString() });
                     setEditData(null); setEditingId(null);
-                } catch (error) { alert("Erro de permissão ao salvar."); }
+                } catch (e) { alert("Erro ao salvar. Verifique as Rules."); }
             };
 
             const handleSaveCredentials = async () => {
                 const loginEl = document.getElementsByName('login_config')[0];
                 const passEl = document.getElementsByName('senha_config')[0];
                 const emailEl = document.getElementsByName('email_recuperacao')[0];
-                const pixEl = document.getElementsByName('pix_config')[0];
 
-                if (!loginEl?.value || !passEl?.value) { alert('⚠️ Defina login e senha.'); return; }
+                if (!loginEl?.value || !passEl?.value) { alert('Defina login e senha.'); return; }
+
+                if (!firebase.auth().currentUser) {
+                    try { await firebase.auth().signInAnonymously(); } catch(e) { alert("Sem conexão."); return; }
+                }
 
                 const loginId = loginEl.value.trim().toLowerCase();
-                const credentialData = {
+                const data = {
                     login: Security.encrypt(loginId),
                     pass: Security.encrypt(passEl.value),
                     recovery: Security.encrypt(emailEl?.value || ''),
-                    pix: Security.encrypt(pixEl?.value || ''),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
 
                 try {
                     const coll = getIsolatedCollection('config_seguranca', loginId);
-                    if(coll) {
-                        await coll.doc('status').set(credentialData);
+                    if (coll) {
+                        await coll.doc('status').set(data);
                         setCurrentLogin(loginId);
-                        alert('✅ Configuração salva com sucesso!');
                         setIsLogged(true);
+                        alert('✅ Configurado com sucesso!');
                     }
-                } catch (e) { alert("Erro de permissão no servidor."); }
+                } catch (e) { alert("Erro de permissão. ATENÇÃO: Atualize o arquivo 'firestore.rules' no console do Firebase."); }
             };
-
-            // ... (COMPONENTES UI MANTIDOS IGUAIS AO ORIGINAL) ...
-            const MenuButton = ({ tab, icon, label }) => (
-                React.createElement('button', {
-                    onClick: () => setActiveTab(tab),
-                    className: `flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-yellow-500 text-black font-bold' : 'text-gray-400 hover:bg-gray-800'}`
-                }, React.createElement('span', null, icon), React.createElement('span', null, label))
-            );
-
-            const FormInput = ({ label, type = "text", placeholder, name }) => (
-                React.createElement('div', { className: 'mb-4' },
-                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, label),
-                    React.createElement('input', { 
-                        type: type, placeholder: placeholder, name: name,
-                        defaultValue: editData ? editData[name] : '',
-                        className: 'w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none'
-                    })
-                )
-            );
-
-            const startEditing = (item, openModalFn) => { setEditData(item); setEditingId(item.id); openModalFn(true); };
-            const cancelEditing = (closeModalFn) => { setEditData(null); setEditingId(null); closeModalFn(false); };
 
             if (!isLogged) {
                 return React.createElement('div', { className: 'min-h-screen bg-gray-900 flex items-center justify-center p-4 animate-fade-in' },
-                    React.createElement('div', { className: 'bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden' },
+                    React.createElement('div', { className: 'bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden' },
                         React.createElement('div', { className: 'bg-black p-8 text-center border-b-4 border-yellow-500' },
-                            React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', className: 'w-20 h-20 mx-auto mb-4' }),
+                            React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', className: 'logo-main' }),
                             React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase' }, 'GESTÃO MASTER'),
                             React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, 'Controle Administrativo Profissional')
                         ),
@@ -382,31 +293,34 @@
                                     onClick: async () => {
                                         const loginVal = document.getElementById('login_identity_input').value.trim().toLowerCase();
                                         const passVal = document.getElementById('login_password_input').value;
-                                        if (!loginVal) { alert("Informe seu usuário."); return; }
+                                        if (!loginVal) { alert("Informe usuário."); return; }
+                                        
+                                        if (!firebase.auth().currentUser) try { await firebase.auth().signInAnonymously(); } catch(e) {}
+
                                         try {
                                             const coll = getIsolatedCollection('config_seguranca', loginVal);
                                             const snap = coll ? await coll.doc('status').get() : null;
                                             if (snap && snap.exists) {
-                                                if (passVal === Security.decrypt(snap.data().pass)) { setCurrentLogin(loginVal); setIsLogged(true); } 
+                                                if (passVal === Security.decrypt(snap.data().pass)) { setCurrentLogin(loginVal); setIsLogged(true); }
                                                 else { alert("❌ Senha incorreta."); }
                                             } else { alert("❌ Usuário não encontrado."); }
-                                        } catch (e) { alert("Erro ao conectar com o servidor."); }
+                                        } catch (e) { alert("Erro de conexão. Verifique as regras do Firebase."); }
                                     },
-                                    className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase shadow-lg hover:bg-gray-800 transition'
-                                }, 'Entrar no Sistema'),
-                                React.createElement('button', { onClick: () => setIsRegistering(true), className: 'w-full text-gray-500 text-xs font-black uppercase hover:text-yellow-600' }, 'PRIMEIRO ACESSO? CADASTRE-SE AQUI')
+                                    className: 'w-full bg-black text-yellow-500 py-4 rounded-2xl font-black uppercase shadow-xl hover:bg-gray-800 transition'
+                                }, 'Entrar'),
+                                React.createElement('button', { onClick: () => setIsRegistering(true), className: 'w-full text-gray-500 text-xs font-black uppercase hover:text-yellow-600 transition' }, 'PRIMEIRO ACESSO? CADASTRE-SE AQUI')
                             ) : React.createElement(React.Fragment, null,
-                                React.createElement('div', { className: 'bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-4' }, React.createElement('p', { className: 'text-[10px] text-yellow-800 font-bold uppercase text-center' }, 'Configuração Inicial de Pasta Segura')),
+                                React.createElement('div', { className: 'bg-yellow-50 p-4 rounded-2xl mb-4 border border-yellow-200 text-center text-xs font-bold text-yellow-800' }, 'Configuração Inicial de Pasta Segura'),
                                 React.createElement('div', { className: 'grid grid-cols-1 gap-4' },
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Criar Usuário'), React.createElement('input', { type: 'text', name: 'login_config', className: 'w-full px-4 py-2 border rounded-lg' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Criar Senha'), React.createElement('input', { type: 'password', name: 'senha_config', className: 'w-full px-4 py-2 border rounded-lg' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-2 border rounded-lg' }))
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Novo Usuário'), React.createElement('input', { name: 'login_config', className: 'w-full px-4 py-2 border rounded-lg' })),
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'Nova Senha'), React.createElement('input', { type: 'password', name: 'senha_config', className: 'w-full px-4 py-2 border rounded-lg' })),
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-[10px] font-black uppercase mb-1' }, 'E-mail Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-2 border rounded-lg' }))
                                 ),
-                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase mt-4 shadow-lg hover:bg-yellow-600 transition' }, 'CRIAR MINHA PASTA E ACESSAR'),
-                                React.createElement('button', { onClick: () => setIsRegistering(false), className: 'w-full text-gray-500 text-xs font-black uppercase' }, 'VOLTAR')
+                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-yellow-500 text-black py-4 rounded-2xl font-black uppercase mt-4 shadow-xl hover:bg-yellow-600 transition' }, 'CRIAR ACESSO'),
+                                React.createElement('button', { onClick: () => setIsRegistering(false), className: 'w-full text-gray-500 text-xs font-black uppercase mt-2' }, 'VOLTAR')
                             )
                         ),
-                        React.createElement('div', { className: 'p-6 bg-gray-50 text-center' },
+                        React.createElement('div', { className: 'p-8 bg-gray-50 text-center border-t border-gray-100' }, 
                             React.createElement('p', { className: 'text-[10px] text-gray-400 font-bold uppercase' }, 'DESENVOLVIDO POR ADRIANA MENDES DA CRUZ SOUSA / SOFTWARE GESTÃO')
                         )
                     )
@@ -416,9 +330,9 @@
             return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
                 React.createElement('div', { className: 'w-full md:w-64 bg-black sidebar no-print border-r-0 md:border-r-2 border-b-2 md:border-b-0 border-yellow-600 flex-shrink-0' },
                     React.createElement('div', { className: 'p-4 md:p-6' },
-                    React.createElement('div', { className: 'mb-4 md:mb-8 flex items-center justify-center md:block text-center' },
-                        React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', alt: 'Logo', className: 'w-10 h-10 md:w-16 md:h-16 mr-3 md:mx-auto md:mb-3' }),
-                        React.createElement('div', null, React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'), React.createElement('p', { className: 'text-yellow-600 text-xs md:text-sm font-semibold' }, 'Andrea Macarron'))
+                    React.createElement('div', { className: 'mb-8 flex items-center justify-center md:block text-center' },
+                        React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/3079/3079645.png', className: 'logo-sidebar mx-auto mb-3' }),
+                        React.createElement('div', null, React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'), React.createElement('p', { className: 'text-yellow-600 text-[10px] font-bold uppercase' }, 'Andrea Macarron'))
                     ),
                     React.createElement('nav', { className: 'flex overflow-x-auto gap-2 md:block md:space-y-2 pb-2 md:pb-0' },
                         React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
@@ -433,59 +347,50 @@
                 ),
                 React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
                     activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        !hasCredentials && showSafetyWarning && React.createElement('div', { onClick: () => setShowSafetyWarning(false), className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer' }, React.createElement('div', { className: 'text-3xl' }, '⚠️'), React.createElement('div', null, React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm' }, 'Ação Necessária'), React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Configure login e senha em Configurações.'))),
+                        !hasCredentials && showSafetyWarning && React.createElement('div', { onClick: () => setShowSafetyWarning(false), className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-2xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer' }, React.createElement('div', { className: 'text-3xl' }, '⚠️'), React.createElement('div', null, React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm' }, 'Ação Necessária'), React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Finalize sua configuração em Configurações.'))),
                         React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
-                            React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' }, React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Total de Imóveis'), React.createElement('p', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)),
-                            React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' }, React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Inquilinos Ativos'), React.createElement('p', { className: 'text-4xl font-bold mt-2' }, inquilinosList.length)),
-                            React.createElement('div', { className: 'bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-xl p-6 text-black shadow-lg' }, React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Receita'), React.createElement('p', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)),
-                            React.createElement('div', { className: 'bg-gradient-to-br from-gray-800 to-black rounded-xl p-6 text-white shadow-lg border border-yellow-600' }, React.createElement('p', { className: 'text-yellow-500 text-sm font-semibold' }, 'Espólios Ativos'), React.createElement('p', { className: 'text-4xl font-bold mt-2 text-yellow-500' }, espoliosList.length))
+                            React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl p-6 text-black shadow-lg' }, React.createElement('p', { className: 'text-yellow-900 text-xs font-bold uppercase' }, 'Total de Imóveis'), React.createElement('p', { className: 'text-4xl font-black mt-2' }, imoveisList.length)),
+                            React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl p-6 text-white shadow-lg' }, React.createElement('p', { className: 'text-gray-300 text-xs font-bold uppercase' }, 'Inquilinos Ativos'), React.createElement('p', { className: 'text-4xl font-black mt-2' }, inquilinosList.length)),
+                            React.createElement('div', { className: 'bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-2xl p-6 text-black shadow-lg' }, React.createElement('p', { className: 'text-yellow-900 text-xs font-bold uppercase' }, 'Receita Mensal'), React.createElement('p', { className: 'text-4xl font-black mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)),
+                            React.createElement('div', { className: 'bg-gradient-to-br from-gray-800 to-black rounded-2xl p-6 text-white shadow-lg border border-yellow-600' }, React.createElement('p', { className: 'text-yellow-50 text-xs font-bold uppercase' }, 'Espólios Ativos'), React.createElement('p', { className: 'text-4xl font-black mt-2 text-yellow-500' }, espoliosList.length))
                         ),
-                        React.createElement('div', { className: 'bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6' },
-                            React.createElement('div', { className: 'flex items-center gap-5' }, React.createElement('div', { className: 'text-5xl' }, '🆘'), React.createElement('div', null, React.createElement('h4', { className: 'text-2xl font-black uppercase' }, 'Suporte'), React.createElement('p', { className: 'text-blue-100 opacity-90' }, 'Fale com a Adriana Mendes para suporte técnico.'))),
-                            React.createElement('button', { onClick: () => window.open('https://wa.me/5511932186193', '_blank'), className: 'bg-white text-blue-700 px-10 py-4 rounded-xl font-black shadow-lg hover:bg-blue-50 transition' }, 'WHATSAPP')
+                        React.createElement('div', { className: 'bg-gradient-to-r from-blue-700 to-blue-500 rounded-3xl p-8 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6' },
+                            React.createElement('div', { className: 'flex items-center gap-5' }, React.createElement('div', { className: 'text-5xl' }, '🆘'), React.createElement('div', null, React.createElement('h4', { className: 'text-2xl font-black uppercase' }, 'Suporte Técnico'), React.createElement('p', { className: 'text-blue-100 opacity-90' }, 'Fale com Adriana Mendes da Cruz Sousa para assistência.'))),
+                            React.createElement('button', { onClick: () => window.open('https://wa.me/5511932186193', '_blank'), className: 'bg-white text-blue-700 px-10 py-4 rounded-2xl font-black shadow-lg hover:bg-blue-50 transition transform hover:scale-105 uppercase text-sm' }, 'WHATSAPP')
                         )
                     ),
                     activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                         React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
-                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 uppercase mb-6' }, 'Acesso e PIX'),
+                        React.createElement('div', { className: 'grid grid-cols-1 gap-6' },
+                            React.createElement('div', { className: 'bg-white rounded-3xl shadow-xl p-8 border-t-4 border-yellow-600' },
+                                React.createElement('h3', { className: 'text-xl font-black text-gray-800 uppercase mb-8' }, 'Alterar Credenciais de Acesso'),
                                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                                     React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Novo Login'), React.createElement('input', { type: 'text', name: 'login_config', defaultValue: currentLogin, className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500' })),
                                     React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Nova Senha'), React.createElement('input', { type: 'password', name: 'senha_config', className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'E-mail'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500' })),
-                                    React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Chave PIX'), React.createElement('input', { type: 'text', name: 'pix_config', defaultValue: userPixKey, className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500 bg-yellow-50' }))
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2' }, 'Recuperação'), React.createElement('input', { type: 'email', name: 'email_recuperacao', className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500' })),
+                                    React.createElement('div', null, React.createElement('label', { className: 'block text-sm font-black uppercase mb-2 text-yellow-700' }, 'Chave PIX'), React.createElement('input', { type: 'text', name: 'pix_config', defaultValue: userPixKey, className: 'w-full px-4 py-3 border-2 rounded-xl outline-none focus:border-yellow-500 bg-yellow-50' }))
                                 ),
-                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase mt-6 shadow-lg' }, 'Salvar Alterações')
+                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-2xl font-black uppercase mt-8 shadow-xl hover:bg-gray-800 transition' }, 'Salvar Alterações')
                             ),
-                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
-                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
+                            React.createElement('div', { className: 'bg-white rounded-3xl shadow-xl p-8 border-t-4 border-yellow-600' },
+                                React.createElement('h3', { className: 'text-xl font-black text-gray-800 mb-6 uppercase' }, '🛠️ Manutenção'),
                                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
-                                    React.createElement('button', { onClick: hardAppReset, className: 'w-full bg-gray-600 text-white px-4 py-4 rounded-lg font-bold text-sm' }, '🔄 ATUALIZAR SISTEMA'),
-                                    React.createElement('button', { onClick: handleResetCredentials, className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm' }, '⚠️ RESETAR PARA O CLIENTE')
+                                    React.createElement('button', { onClick: hardAppReset, className: 'w-full bg-gray-600 text-white px-4 py-5 rounded-2xl font-black text-sm hover:bg-gray-700 transition shadow-lg' }, '🔄 ATUALIZAR SISTEMA'),
+                                    React.createElement('button', { onClick: handleResetCredentials, className: 'w-full bg-red-600 text-white px-4 py-5 rounded-2xl font-black text-sm hover:bg-red-700 transition shadow-lg' }, '⚠️ RESETAR PARA O CLIENTE')
                                 )
                             )
                         )
                     ),
                     activeTab === 'realestate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' }, 
                         React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏢 Imobiliárias'), React.createElement('button', { onClick: () => setShowRealEstateForm(true), className: 'bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Nova Imobiliária')),
-                        showRealEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
-                            React.createElement('div', { className: 'flex items-center justify-between mb-6' }, React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, 'Cadastrar Imobiliária'), React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 text-2xl' }, '×')),
+                        showRealEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                            React.createElement('div', { className: 'flex items-center justify-between mb-6' }, React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Imobiliária' : 'Cadastrar Nova Imobiliária'), React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 text-2xl font-bold' }, '×')),
                             React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, React.createElement(FormInput, { label: 'Nome da Imobiliária *', name: 'nome' })),
-                            React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
+                            React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg font-bold shadow' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
                         ),
                         React.createElement(DataList, { items: imobiliariasList, collection: 'imobiliarias', onEdit: (i) => startEditing(i, setShowRealEstateForm), renderItem: (i) => React.createElement('h4', { className: 'font-bold' }, i.nome) })
-                    ),
-                    activeTab === 'tenants' && React.createElement('div', { className: 'space-y-6 animate-fade-in' }, 
-                        React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'), React.createElement('button', { onClick: () => setShowTenantForm(true), className: 'bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Novo Inquilino')),
-                        showTenantForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
-                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, React.createElement(FormInput, { label: 'Nome *', name: 'nome' }), React.createElement(FormInput, { label: 'CPF *', name: 'cpf' })),
-                            React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('inquilinos', setShowTenantForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowTenantForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
-                        ),
-                        React.createElement(DataList, { items: inquilinosList, collection: 'inquilinos', onEdit: (i) => startEditing(i, setShowTenantForm), renderItem: (i) => React.createElement('h4', { className: 'font-bold' }, i.nome) })
                     )
-                    // ... Outras abas processadas automaticamente pelo React no código final
                 )
             );
         }
