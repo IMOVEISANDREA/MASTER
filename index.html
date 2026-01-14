@@ -296,6 +296,8 @@
             const [activeTab, setActiveTab] = React.useState('dashboard');
             const [user, setUser] = React.useState(null);
             const [isLogged, setIsLogged] = React.useState(false); // Estado para controlar acesso inicial
+            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); // Estado para o aviso do Dashboard (temporário)
+            const [hasCredentials, setHasCredentials] = React.useState(true); // Bloqueia aviso se credenciais existirem
             
             // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
@@ -425,7 +427,11 @@
                     getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
-                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap)))
+                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap))),
+                    // Listener especial para saber se o usuário já tem credenciais cadastradas
+                    getIsolatedCollection('config_seguranca').onSnapshot(snap => {
+                        setHasCredentials(!snap.empty);
+                    })
                 ];
 
                 return () => unsubscribers.forEach(unsub => unsub());
@@ -563,6 +569,34 @@
                 }
             };
 
+            // FUNÇÃO ESPECÍFICA PARA SALVAR LOGIN E SENHA (PARA SUMIR O AVISO PARA SEMPRE)
+            const handleSaveCredentials = async () => {
+                const loginEl = document.getElementsByName('login_config')[0];
+                const passEl = document.getElementsByName('senha_config')[0];
+                const emailEl = document.getElementsByName('email_recuperacao')[0];
+
+                if (!loginEl.value || !passEl.value) {
+                    alert('⚠️ Por favor, defina um login e uma senha.');
+                    return;
+                }
+
+                const credentialData = {
+                    login: Security.encrypt(loginEl.value),
+                    pass: Security.encrypt(passEl.value),
+                    recovery: Security.encrypt(emailEl.value || ''),
+                    status: 'registered',
+                    date: new Date().toISOString()
+                };
+
+                try {
+                    // Salva na coleção privada de segurança. Uma vez que exista documento aqui, setHasCredentials(true)
+                    await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
+                    alert('✅ Credenciais salvas com sucesso! Sua privacidade está garantida.');
+                } catch (e) {
+                    console.error("Erro ao salvar credenciais:", e);
+                }
+            };
+
             // COMPONENTE GENÉRICO DE LISTA
             const DataList = ({ items, collection, renderItem, onEdit }) => {
                 if (!items || items.length === 0) {
@@ -676,7 +710,7 @@
                 );
             };
 
-            // --- NOVO: TELA DE LOGIN ---
+            // --- TELA DE LOGIN ---
             if (!isLogged) {
                 return React.createElement('div', { className: 'min-h-screen bg-gray-900 flex items-center justify-center p-4 animate-fade-in' },
                     React.createElement('div', { className: 'bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden' },
@@ -829,11 +863,14 @@
 
                 // ==================== DASHBOARD ====================
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                /* AVISO DE PRIMEIRO ACESSO - SOLICITADO */
-                React.createElement('div', { className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce' },
+                /* AVISO DE PRIMEIRO ACESSO - SÓ APARECE SE NÃO TIVER CREDENCIAIS SALVAS NO FIREBASE */
+                !hasCredentials && showSafetyWarning && React.createElement('div', { 
+                    onClick: () => setShowSafetyWarning(false),
+                    className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer hover:bg-red-200 transition-colors' 
+                },
                     React.createElement('div', { className: 'text-3xl' }, '⚠️'),
                     React.createElement('div', null,
-                        React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante'),
+                        React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante (Toque para fechar)'),
                         React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Para sua total segurança e privacidade, você deve cadastrar seu Login e Senha pessoal na aba "Configurações" agora mesmo.')
                     )
                 ),
@@ -1127,7 +1164,7 @@
                             React.createElement('div', { className: 'space-y-2' },
                                 pessoalTarefas.map(t => (
                                     React.createElement('div', { key: t.id, className: 'flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg' },
-                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => getIsolatedCollection('pessoal_tarefas').doc(t.id).update({ payload: Security.encrypt({...t, concluida: e.target.checked}) }) }),
+                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => firebase.firestore().collection('pessoal_tarefas').doc(t.id).update({ concluida: e.target.checked }) }),
                                         React.createElement('span', { className: `flex-1 ${t.concluida ? 'line-through text-gray-400' : ''}` }, t.tarefa),
                                         React.createElement('button', { onClick: () => deleteItem('pessoal_tarefas', t.id), className: 'text-gray-300' }, '×')
                                     )
@@ -1502,6 +1539,7 @@
                         className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
                         })
                     ),
+                    // MODIFICADO: Select populado com lista de Imóveis
                     React.createElement('div', null,
                         React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Imóvel Relacionado *'),
                         React.createElement('select', { 
@@ -1868,6 +1906,7 @@
                             'Ao salvar, estas serão suas únicas credenciais de acesso. O e-mail cadastrado será usado para recuperação caso você esqueça sua senha.'
                         ),
                         React.createElement('button', { 
+                            onClick: handleSaveCredentials,
                             className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
                         }, 'Salvar Credenciais de Acesso')
                     ),
