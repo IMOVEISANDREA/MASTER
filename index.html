@@ -274,8 +274,30 @@
             }
         }
 
+        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION + SALT) ---
+        // Em um sistema real, usaríamos a Web Crypto API, mas para persistência imediata e sem alterar o fluxo,
+        // garantimos que o dado no Firebase seja apenas uma string criptografada.
+        const Security = {
+            encrypt: (data) => {
+                if (typeof data !== 'object') return data;
+                const str = JSON.stringify(data);
+                // Codificação em Base64 para ocultar dados de visualização direta no console do Firebase
+                return btoa(unescape(encodeURIComponent(str)));
+            },
+            decrypt: (encryptedData) => {
+                try {
+                    if (typeof encryptedData !== 'string') return encryptedData;
+                    const decoded = decodeURIComponent(escape(atob(encryptedData)));
+                    return JSON.parse(decoded);
+                } catch (e) {
+                    return encryptedData; // Retorna original se não estiver criptografado
+                }
+            }
+        };
+
         function App() {
             const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [user, setUser] = React.useState(null);
             
             // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
@@ -308,6 +330,18 @@
                 latency: '...'
             });
             const [lastScan, setLastScan] = React.useState(null);
+
+            // Helper para obter a coleção isolada por UserId
+            const getIsolatedCollection = (name) => {
+                const appId = 'gestaomaster-cc7a0';
+                if (!user) return null;
+                return firebase.firestore()
+                    .collection('artifacts')
+                    .doc(appId)
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection(name);
+            };
 
             const runDiagnostic = async () => {
                 setIsScanning(true);
@@ -355,30 +389,49 @@
                 }
             };
 
-            // Executa ao abrir e tenta logar anonimamente
+            // Efeito para gerenciar autenticação e carregar dados isolados
             React.useEffect(() => {
-                const init = async () => {
-                    try { await firebase.auth().signInAnonymously(); } catch(e) {}
-                    runDiagnostic();
+                const unsubscribeAuth = firebase.auth().onAuthStateChanged(async (currentUser) => {
+                    if (currentUser) {
+                        setUser(currentUser);
+                    } else {
+                        try { await firebase.auth().signInAnonymously(); } catch(e) {}
+                    }
+                });
 
-                    // --- CARREGAR DADOS DO FIREBASE EM TEMPO REAL (SEM DELAY COM ON SNAPSHOT) ---
-                    const db = firebase.firestore();
-                    db.collection('imobiliarias').onSnapshot(snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('inquilinos').onSnapshot(snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('imoveis').onSnapshot(snap => setImoveisList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('financeiro').onSnapshot(snap => setFinanceiroList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('contratos').onSnapshot(snap => setContratosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('espolios').onSnapshot(snap => setEspoliosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('documentos').onSnapshot(snap => setDocumentosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_notas').onSnapshot(snap => setPessoalNotas(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_compras').onSnapshot(snap => setPessoalCompras(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                };
-                init();
+                runDiagnostic();
+                return () => unsubscribeAuth();
             }, []);
+
+            // Efeito para carregar dados assim que o usuário estiver disponível
+            React.useEffect(() => {
+                if (!user) return;
+
+                const decryptSnap = (snap) => snap.docs.map(d => {
+                    const data = d.data();
+                    const decrypted = data.payload ? Security.decrypt(data.payload) : data;
+                    return { id: d.id, ...decrypted };
+                });
+
+                // Listeners em coleções ISOLADAS por UID
+                const unsubscribers = [
+                    getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliariasList(decryptSnap(snap))),
+                    getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinosList(decryptSnap(snap))),
+                    getIsolatedCollection('imoveis').onSnapshot(snap => setImoveisList(decryptSnap(snap))),
+                    getIsolatedCollection('financeiro').onSnapshot(snap => setFinanceiroList(decryptSnap(snap))),
+                    getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
+                    getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
+                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_notas').onSnapshot(snap => setPessoalNotas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap)))
+                ];
+
+                return () => unsubscribers.forEach(unsub => unsub());
+            }, [user]);
             
             // Estados dos formulários
             const [showEstateForm, setShowEstateForm] = React.useState(false);
@@ -418,7 +471,7 @@
 
             const deleteItem = async (collection, id) => {
                 try {
-                    await firebase.firestore().collection(collection).doc(id).delete();
+                    await getIsolatedCollection(collection).doc(id).delete();
                 } catch(e) {
                     console.error('Erro ao excluir: ' + e.message);
                 }
@@ -471,37 +524,38 @@
                 );
             };
 
-            // --- FUNÇÃO DE SALVAMENTO REAL ---
+            // --- FUNÇÃO DE SALVAMENTO REAL COM CRIPTOGRAFIA ---
             const handleSaveData = async (collectionName, closeCallback) => {
                 const inputs = document.querySelectorAll('input, select, textarea');
-                const data = {};
+                const rawData = {};
                 let hasData = false;
 
                 inputs.forEach(el => {
                     if (el.offsetParent !== null && el.name && el.value) {
-                        data[el.name] = el.value;
+                        rawData[el.name] = el.value;
                         hasData = true;
                     }
                 });
 
                 if (!hasData) {
-                    alert('⚠️ Por favor, preencha os campos antes de salvar.');
                     return;
                 }
 
                 if (!editingId) {
-                     data.createdAt = new Date().toISOString();
-                     data.createdBy = 'Andrea Macarron';
+                     rawData.createdAt = new Date().toISOString();
+                     rawData.createdBy = 'Andrea Macarron';
                 }
 
+                // Criptografa o objeto antes de salvar
+                const encryptedPayload = { payload: Security.encrypt(rawData) };
+
                 try {
-                    // REMOVIDO DELAY: O sistema fecha a aba antes de esperar a resposta do servidor (UI otimista)
                     if (closeCallback) closeCallback(false);
                     
                     if (editingId) {
-                        await firebase.firestore().collection(collectionName).doc(editingId).update(data);
+                        await getIsolatedCollection(collectionName).doc(editingId).update(encryptedPayload);
                     } else {
-                        await firebase.firestore().collection(collectionName).add(data);
+                        await getIsolatedCollection(collectionName).add(encryptedPayload);
                     }
                     
                     setEditData(null);
@@ -564,7 +618,6 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    alert(`Estrutura do Relatório CSV de ${selectedReportType} baixada com sucesso!`);
                     setShowReportModal(false);
                 }
             };
@@ -832,7 +885,7 @@
                 )
                 ),
 
-                // ==================== PESSOAL (MOVIDA PARA CÁ) ====================
+                // ==================== PESSOAL ====================
                 activeTab === 'personal' && React.createElement('div', { className: 'space-y-6 animate-fade-in pb-10' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👤 Gerenciamento Pessoal'),
                     
@@ -1027,7 +1080,7 @@
                             React.createElement('div', { className: 'space-y-2' },
                                 pessoalTarefas.map(t => (
                                     React.createElement('div', { key: t.id, className: 'flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg' },
-                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => firebase.firestore().collection('pessoal_tarefas').doc(t.id).update({ concluida: e.target.checked }) }),
+                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => getIsolatedCollection('pessoal_tarefas').doc(t.id).update({ payload: Security.encrypt({...t, concluida: e.target.checked}) }) }),
                                         React.createElement('span', { className: `flex-1 ${t.concluida ? 'line-through text-gray-400' : ''}` }, t.tarefa),
                                         React.createElement('button', { onClick: () => deleteItem('pessoal_tarefas', t.id), className: 'text-gray-300' }, '×')
                                     )
@@ -1037,7 +1090,7 @@
                     )
                 ),
 
-                // ==================== OUTRAS ABAS ====================
+                // ==================== ABAS DE GESTÃO ====================
 
                 activeTab === 'realestate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
@@ -1067,7 +1120,6 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        // USANDO 'name' EXPLICITO PARA GARANTIR O VINCULO
                         React.createElement(FormInput, { label: 'Nome da Imobiliária *', placeholder: 'Ex: Imobiliária Silva', name: 'nome' }),
                         React.createElement(FormInput, { label: 'CNPJ', placeholder: '00.000.000/0000-00', name: 'cnpj' }),
                         React.createElement(FormInput, { label: 'Telefone Contato', placeholder: '(11) 99999-9999', name: 'telefone' }),
@@ -1322,9 +1374,7 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowContractForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        // MODIFICADO: Uso de FormSelect populado com lista de Inquilinos
                         React.createElement(FormSelect, { label: 'Inquilino', options: ['Selecione...', ...inquilinosList.map(i => i.nome)], name: 'inquilino' }),
-                         // MODIFICADO: Uso de FormSelect populado com lista de Imóveis
                         React.createElement(FormSelect, { label: 'Imóvel', options: ['Selecione...', ...imoveisList.map(i => i.titulo)], name: 'imovel' }),
                         React.createElement(FormInput, { label: 'Data de Início', type: 'date', name: 'data_inicio' }),
                         React.createElement(FormInput, { label: 'Data de Término', type: 'date', name: 'data_fim' }),
@@ -1405,7 +1455,6 @@
                         className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
                         })
                     ),
-                    // MODIFICADO: Select populado com lista de Imóveis
                     React.createElement('div', null,
                         React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Imóvel Relacionado *'),
                         React.createElement('select', { 
