@@ -879,6 +879,11 @@
                                             return;
                                         }
 
+                                        // GARANTE QUE HÁ UMA CONEXÃO ATIVA COM O BANCO ANTES DE BUSCAR
+                                        if (!firebase.auth().currentUser) {
+                                            try { await firebase.auth().signInAnonymously(); } catch(e) {}
+                                        }
+
                                         try {
                                             const appId = 'gestaomaster-cc7a0';
                                             const configSnap = await firebase.firestore()
@@ -900,7 +905,8 @@
                                                 alert("❌ Usuário não encontrado. Se for seu primeiro acesso, clique em 'Primeiro Acesso'.");
                                             }
                                         } catch (e) {
-                                            alert("Erro ao conectar.");
+                                            console.error(e);
+                                            alert("Erro ao conectar. Verifique sua internet.");
                                         }
                                     },
                                     className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg'
@@ -1059,7 +1065,7 @@
                 ),
 
                 activeTab === 'tenants' && React.createElement('div', { className: 'space-y-6 animate-fade-in' }, 
-                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowTenantForm(true); }, className: 'bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Novo Inquilino')),
+                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowTenantForm(true); }, className: 'bg-yellow-50 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Novo Inquilino')),
                     showTenantForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, React.createElement(FormInput, { label: 'Nome Completo *', name: 'nome' }), React.createElement(FormInput, { label: 'CPF *', name: 'cpf' })),
                         React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('inquilinos', setShowTenantForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowTenantForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
@@ -1068,7 +1074,7 @@
                 ),
 
                 activeTab === 'properties' && React.createElement('div', { className: 'space-y-6 animate-fade-in' }, 
-                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏠 Imóveis'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowPropertyForm(true); }, className: 'bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Novo Imóvel')),
+                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏠 Imóveis'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowPropertyForm(true); }, className: 'bg-yellow-50 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Novo Imóvel')),
                     showPropertyForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, React.createElement(FormInput, { label: 'Título do Imóvel *', name: 'titulo' }), React.createElement(FormSelect, { label: 'Situação', options: ['Disponível', 'Alugado', 'Reforma'], name: 'situacao' })),
                         React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('imoveis', setShowPropertyForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowPropertyForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
@@ -1077,7 +1083,7 @@
                 ),
 
                 activeTab === 'finance' && React.createElement('div', { className: 'space-y-6 animate-fade-in' }, 
-                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💰 Financeiro'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowFinanceForm(true); }, className: 'bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Nova Transação')),
+                    React.createElement('div', { className: 'flex items-center justify-between' }, React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💰 Financeiro'), React.createElement('button', { onClick: () => { setEditData(null); setEditingId(null); setShowFinanceForm(true); }, className: 'bg-yellow-50 text-black px-6 py-3 rounded-lg font-bold shadow-lg' }, '+ Nova Transação')),
                     showFinanceForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, React.createElement(FormSelect, { label: 'Tipo', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }), React.createElement(FormInput, { label: 'Valor', name: 'valor', type: 'number' })),
                         React.createElement('div', { className: 'flex gap-4 mt-6' }, React.createElement('button', { onClick: () => handleSaveData('financeiro', setShowFinanceForm), className: 'bg-black text-yellow-500 px-6 py-3 rounded-lg' }, 'Salvar'), React.createElement('button', { onClick: () => cancelEditing(setShowFinanceForm), className: 'px-6 py-3 border rounded-lg' }, 'Cancelar'))
