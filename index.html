@@ -2306,50 +2306,53 @@
                     )
                     ),
 
-                    // Card de Manutenção (ÁREA DO DESENVOLVEDOR PROTEGIDA)
-                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                    // Card de Manutenção (LIBERADO)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Manutenção'),
+                        React.createElement('div', { className: 'space-y-3' },
+                            React.createElement('p', { className: 'text-xs text-gray-600' }, 'Utilize esta opção caso o sistema apresente falhas ou para receber novas atualizações. Isso limpará o cache local e forçará o recarregamento da aplicação.'),
+                            React.createElement('button', {
+                                onClick: hardAppReset,
+                                className: 'w-full bg-blue-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                            }, 
+                                React.createElement('span', { className: 'text-lg' }, '🔄'),
+                                'LIMPAR CACHE E ATUALIZAR'
+                            )
+                        )
+                    ),
+
+                    // Card Área do Desenvolvedor (PROTEGIDO)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, 'ÁREA DO DESENVOLVEDOR'),
                         !isDevUnlocked ? (
-                            React.createElement('div', { className: 'flex flex-col items-center justify-center p-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200' },
-                                React.createElement('span', { className: 'text-4xl mb-4' }, '🔐'),
-                                React.createElement('p', { className: 'text-sm text-gray-500 mb-6 text-center max-w-xs' }, 'Esta área contém ferramentas críticas do sistema. O acesso é restrito ao desenvolvedor.'),
+                            React.createElement('div', { className: 'flex flex-col items-center justify-center py-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200' },
+                                React.createElement('span', { className: 'text-3xl mb-3' }, '🔐'),
                                 React.createElement('button', {
                                     onClick: () => {
                                         const pw = prompt("Digite a Senha do Desenvolvedor:");
-                                        if (pw === "developer123") { // Senha exemplo conforme lógica solicitada
+                                        if (pw === "MasterDev@2025") {
                                             setIsDevUnlocked(true);
                                         } else if (pw !== null) {
                                             alert("Senha incorreta.");
                                         }
                                     },
-                                    className: 'bg-black text-yellow-500 px-8 py-3 rounded-lg font-black uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-lg'
+                                    className: 'bg-black text-yellow-500 px-6 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-gray-800 transition shadow-lg'
                                 }, 'DESBLOQUEAR ACESSO')
                             )
                         ) : (
-                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in' },
-                                React.createElement('div', { className: 'space-y-3' },
-                                    React.createElement('p', { className: 'text-xs text-gray-600' }, 'Utilize para limpar cache local e receber novas atualizações.'),
-                                    React.createElement('button', {
-                                        onClick: hardAppReset,
-                                        className: 'w-full bg-blue-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
-                                    }, 
-                                        React.createElement('span', { className: 'text-lg' }, '🔄'),
-                                        'LIMPAR CACHE E ATUALIZAR'
-                                    )
-                                ),
-                                React.createElement('div', { className: 'space-y-3' },
-                                    React.createElement('p', { className: 'text-xs text-gray-600' }, 'Apaga as credenciais de acesso atuais para nova entrega ao cliente.'),
-                                    React.createElement('button', {
-                                        onClick: handleClientReset,
-                                        className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
-                                    }, 
-                                        React.createElement('span', { className: 'text-lg' }, '⚠️'),
-                                        'RESETAR PARA O CLIENTE'
-                                    )
+                            React.createElement('div', { className: 'space-y-3 animate-fade-in' },
+                                React.createElement('h4', { className: 'text-xs font-black text-red-600 uppercase mb-1' }, 'RESET DE ACESSOS'),
+                                React.createElement('p', { className: 'text-[10px] text-gray-600 leading-tight' }, 'Use este botão somente para remover suas credenciais de teste antes de entregar ao cliente final. Ao clicar, o Login e Senha serão apagados do servidor, forçando o próximo usuário a realizar a "Configuração de Primeiro Acesso".'),
+                                React.createElement('button', {
+                                    onClick: handleClientReset,
+                                    className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                                }, 
+                                    React.createElement('span', { className: 'text-lg' }, '⚠️'),
+                                    'RESETAR PARA O CLIENTE'
                                 ),
                                 React.createElement('button', {
                                     onClick: () => setIsDevUnlocked(false),
-                                    className: 'md:col-span-2 text-xs font-bold text-gray-400 hover:text-red-500 transition underline'
+                                    className: 'w-full text-[10px] font-bold text-gray-400 hover:text-red-500 transition underline pt-2'
                                 }, 'Bloquear Área Novamente')
                             )
                         )
