@@ -325,7 +325,7 @@
             // --- ESTADO PARA VISUALIZAÇÃO DE DOCUMENTOS ---
             const [viewingItem, setViewingItem] = React.useState(null);
 
-            // --- LÓGICA DE DIAGNÓSTICO ---
+            // --- LÓGICA DE DIAGNÓSTICO E MANUTENÇÃO (ATUALIZADA) ---
             const [isScanning, setIsScanning] = React.useState(true);
             const [scanResult, setScanResult] = React.useState({
                 db: 'pendente',
@@ -334,6 +334,9 @@
                 latency: '...'
             });
             const [lastScan, setLastScan] = React.useState(null);
+
+            // Novo Estado para o Alerta de Manutenção
+            const [showMaintenanceAlert, setShowMaintenanceAlert] = React.useState(false);
 
             // Helper para obter a coleção isolada por UserId
             const getIsolatedCollection = (name) => {
@@ -359,11 +362,14 @@
                         results.db = 'operacional';
                     } catch (e) {
                         results.db = (e.code === 'permission-denied' || e.code === 'not-found') ? 'conectado' : 'offline/cache';
+                         // Se houver erro de timeout, sugere manutenção
+                         if (e.message === 'timeout') setShowMaintenanceAlert(true);
                     }
                     results.auth = firebase.auth().currentUser ? 'autenticado' : 'anónimo';
                     results.modules = (typeof React !== 'undefined') ? 'estável' : 'falha';
                 } catch (err) {
                     console.error("Erro no diagnóstico:", err);
+                    setShowMaintenanceAlert(true); // Ativa o alerta em caso de erro
                 }
 
                 const end = performance.now();
@@ -378,6 +384,7 @@
             const hardAppReset = async () => {
                 if (confirm("Limpar cache e forçar atualização? Isso recarregará o sistema.")) {
                     try {
+                        localStorage.setItem('lastMaintenanceCheck', Date.now().toString()); // Atualiza a data da manutenção
                         if ('serviceWorker' in navigator) {
                             const registrations = await navigator.serviceWorker.getRegistrations();
                             for (let reg of registrations) { await reg.unregister(); }
@@ -404,8 +411,27 @@
                     }
                 });
 
+                // LÓGICA DO ALARME DE MANUTENÇÃO (A CADA 15 DIAS OU ERRO)
+                const lastCheck = localStorage.getItem('lastMaintenanceCheck');
+                const fifteenDays = 15 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+
+                if (!lastCheck || (now - parseInt(lastCheck) > fifteenDays)) {
+                    setShowMaintenanceAlert(true);
+                }
+
+                // Captura erros globais para sugerir manutenção
+                const handleGlobalError = () => setShowMaintenanceAlert(true);
+                window.addEventListener('error', handleGlobalError);
+                window.addEventListener('unhandledrejection', handleGlobalError);
+
                 runDiagnostic();
-                return () => unsubscribeAuth();
+                
+                return () => {
+                    unsubscribeAuth();
+                    window.removeEventListener('error', handleGlobalError);
+                    window.removeEventListener('unhandledrejection', handleGlobalError);
+                };
             }, []);
 
             // Efeito para carregar dados assim que o usuário estiver disponível
@@ -970,6 +996,23 @@
                             }, 'Fechar')
                         )
                     )
+                ),
+
+                // ALERTA DE MANUTENÇÃO AUTOMÁTICO (NOVO)
+                showMaintenanceAlert && React.createElement('div', { className: 'fixed bottom-4 right-4 z-[9999] bg-red-600 text-white p-6 rounded-xl shadow-2xl border-4 border-white animate-bounce md:animate-none md:hover:scale-105 transition-transform max-w-sm' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                        React.createElement('h3', { className: 'font-black text-lg uppercase flex items-center gap-2' },
+                            React.createElement('span', { className: 'text-2xl' }, '🛠️'), 'Manutenção Necessária'
+                        ),
+                        React.createElement('button', { onClick: () => setShowMaintenanceAlert(false), className: 'text-white hover:text-gray-200 text-xl font-bold' }, '×')
+                    ),
+                    React.createElement('p', { className: 'text-sm font-medium mb-4' },
+                        'Olá! Para garantir que o sistema continue rápido e sem erros, é hora de realizar uma limpeza preventiva ou foi detectado um erro técnico.'
+                    ),
+                    React.createElement('button', { 
+                        onClick: hardAppReset,
+                        className: 'w-full bg-white text-red-600 font-bold py-3 rounded-lg shadow hover:bg-gray-100 uppercase tracking-wide text-xs'
+                    }, 'Realizar Manutenção Agora')
                 ),
 
                 // ==================== DASHBOARD ====================
@@ -1771,6 +1814,7 @@
                 )
                 ),
 
+                // RELATÓRIOS
                 activeTab === 'reports' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📈 Relatórios'),
