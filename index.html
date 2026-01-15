@@ -272,8 +272,9 @@
       // Envolvemos todo o código em um Listener para aguardar o carregamento dos scripts com 'defer'
       document.addEventListener('DOMContentLoaded', function() {
         
-        // CONFIGURAÇÃO REAL DO FIREBASE - USANDO VARIÁVEIS DE AMBIENTE QUANDO DISPONÍVEIS
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // CONFIGURAÇÃO REAL DO FIREBASE
+        // FIX: Mantemos o projectId fixo para evitar perda de dados em atualizações
+        const firebaseConfig = {
             apiKey: "AIzaSyDW9gF4k0e2XuMbcgKouyIUmo3uaUxLheE",
             authDomain: "gestaomaster-cc7a0.firebaseapp.com",
             projectId: "gestaomaster-cc7a0",
@@ -281,6 +282,9 @@
             messagingSenderId: "61242084578",
             appId: "1:61242084578:web:e1f4fd6a1287bfd3b422bb"
         };
+
+        // CONSTANTE ESTÁVEL PARA O APP ID (Evita que o Firebase mude de pasta ao atualizar o código)
+        const APP_ID_STABLE = "gestaomaster-cc7a0";
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             try {
@@ -361,7 +365,7 @@
 
             // Helper para obter a coleção isolada por Login (Sincronização via Identidade)
             const getIsolatedCollection = (name) => {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                const appId = APP_ID_STABLE;
                 if (!isLogged || !userLogin) return null;
                 // RESOLUÇÃO DE ERRO DE PERMISSÃO: Gravação no caminho /public/data com prefixo do login
                 return firebase.firestore()
@@ -411,6 +415,7 @@
                             const cacheNames = await caches.keys();
                             await Promise.all(cacheNames.map(name => caches.delete(name)));
                         }
+                        localStorage.clear(); // Limpa tudo para garantir um reset total
                         window.location.reload(true);
                     } catch (e) { 
                         console.error("Erro ao limpar.", e);
@@ -422,10 +427,20 @@
             // Efeito para gerenciar autenticação e carregar dados isolados
             React.useEffect(() => {
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try { await firebase.auth().signInWithCustomToken(__initial_auth_token); } catch(e) { console.error("Custom token sign-in failed", e); }
-                    } else {
-                        try { await firebase.auth().signInAnonymously(); } catch(e) { console.error("Anonymous sign-in failed", e); }
+                    // FIX: Resolvemos o erro auth/custom-token-mismatch ao tentar usar o token anônimo como padrão
+                    // se o token injetado falhar ou não for compatível com as chaves personalizadas do usuário.
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            try { 
+                                await firebase.auth().signInWithCustomToken(__initial_auth_token); 
+                                return; // Sucesso com token customizado
+                            } catch(e) { 
+                                // Se falhar (mismatch), caímos para o anônimo abaixo
+                            }
+                        }
+                        await firebase.auth().signInAnonymously();
+                    } catch (e) {
+                        console.error("Erro crítico na inicialização de Auth:", e);
                     }
                 };
                 
@@ -473,7 +488,7 @@
                            setHasCredentials(true);
                            const data = configDoc.data();
                            const decrypted = data.payload ? Security.decrypt(data.payload) : data;
-                           if (decrypted.pix) setUserPixKey(decrypted.pix);
+                           if (decrypted.pix) setUserPixKey(Security.decrypt(decrypted.pix));
                         }
                     }, logError('config_seguranca'))
                 ];
@@ -481,9 +496,18 @@
                 return () => unsubscribers.forEach(unsub => unsub());
             }, [isLogged, userLogin]);
 
-            // Helper para preencher login salvo
+            // Helper para preencher login salvo e realizar Auto-Login
             React.useEffect(() => {
                 if (typeof window !== 'undefined') {
+                    // Primeiro tenta ver se tem uma sessão já ativa no localStorage
+                    const savedSessionUser = localStorage.getItem('gm_session_user');
+                    const sessionActive = localStorage.getItem('gm_session_active');
+                    
+                    if (sessionActive === 'true' && savedSessionUser) {
+                        setUserLogin(savedSessionUser);
+                        setIsLogged(true);
+                    }
+
                     const saved = localStorage.getItem('gm_remembered_data');
                     if (saved) {
                         try {
@@ -655,7 +679,7 @@
                 };
 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                    const appId = APP_ID_STABLE;
                     // Sincronização via Identidade: Salva na pasta pública com prefixo do login
                     await firebase.firestore()
                         .collection('artifacts')
@@ -665,6 +689,10 @@
                         .collection(`${loginEl.value}_config_seguranca`)
                         .doc('status')
                         .set({ payload: Security.encrypt(credentialData) });
+                    
+                    // Atualiza sessão no localStorage após mudar credenciais
+                    localStorage.setItem('gm_session_user', loginEl.value);
+                    setUserLogin(loginEl.value);
                     
                     alert('✅ Credenciais e PIX salvos com sucesso! Sua sincronização entre aparelhos está ativa.');
                 } catch (e) {
@@ -689,7 +717,7 @@
                     localStorage.removeItem('gm_remembered_data');
                 }
 
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                const appId = APP_ID_STABLE;
                 
                 try {
                     const docRef = firebase.firestore()
@@ -730,6 +758,9 @@
                     if (Security.decrypt(storedData.pass) === passVal) {
                         setUserLogin(userVal);
                         setIsLogged(true);
+                        // Persistir a sessão ativa para atualizações do código
+                        localStorage.setItem('gm_session_active', 'true');
+                        localStorage.setItem('gm_session_user', userVal);
                     } else {
                         alert("Senha incorreta.");
                     }
@@ -743,7 +774,7 @@
             const handleClientReset = async () => {
                 if (confirm("⚠️ ATENÇÃO: Isso apagará as credenciais de login e fará o sistema voltar ao estado original de fábrica. Deseja continuar?")) {
                    try {
-                       const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                       const appId = APP_ID_STABLE;
                        await firebase.firestore()
                            .collection('artifacts')
                            .doc(appId)
@@ -752,6 +783,8 @@
                            .collection(`${userLogin}_config_seguranca`)
                            .doc('status')
                            .delete();
+                       localStorage.removeItem('gm_session_active');
+                       localStorage.removeItem('gm_session_user');
                        alert("✅ Sistema resetado. O programa agora solicitará um novo cadastro de primeiro acesso.");
                        window.location.reload();
                    } catch(e) {
@@ -2306,53 +2339,50 @@
                     )
                     ),
 
-                    // Card de Manutenção (LIBERADO)
-                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
-                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Manutenção'),
-                        React.createElement('div', { className: 'space-y-3' },
-                            React.createElement('p', { className: 'text-xs text-gray-600' }, 'Utilize esta opção caso o sistema apresente falhas ou para receber novas atualizações. Isso limpará o cache local e forçará o recarregamento da aplicação.'),
-                            React.createElement('button', {
-                                onClick: hardAppReset,
-                                className: 'w-full bg-blue-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
-                            }, 
-                                React.createElement('span', { className: 'text-lg' }, '🔄'),
-                                'LIMPAR CACHE E ATUALIZAR'
-                            )
-                        )
-                    ),
-
-                    // Card Área do Desenvolvedor (PROTEGIDO)
-                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    // Card de Manutenção (ÁREA DO DESENVOLVEDOR PROTEGIDA)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, 'ÁREA DO DESENVOLVEDOR'),
                         !isDevUnlocked ? (
-                            React.createElement('div', { className: 'flex flex-col items-center justify-center py-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200' },
-                                React.createElement('span', { className: 'text-3xl mb-3' }, '🔐'),
+                            React.createElement('div', { className: 'flex flex-col items-center justify-center p-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200' },
+                                React.createElement('span', { className: 'text-4xl mb-4' }, '🔐'),
+                                React.createElement('p', { className: 'text-sm text-gray-500 mb-6 text-center max-w-xs' }, 'Esta área contém ferramentas críticas do sistema. O acesso é restrito ao desenvolvedor.'),
                                 React.createElement('button', {
                                     onClick: () => {
                                         const pw = prompt("Digite a Senha do Desenvolvedor:");
-                                        if (pw === "MasterDev@2025") {
+                                        if (pw === "developer123") { // Senha exemplo conforme lógica solicitada
                                             setIsDevUnlocked(true);
                                         } else if (pw !== null) {
                                             alert("Senha incorreta.");
                                         }
                                     },
-                                    className: 'bg-black text-yellow-500 px-6 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-gray-800 transition shadow-lg'
+                                    className: 'bg-black text-yellow-500 px-8 py-3 rounded-lg font-black uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-lg'
                                 }, 'DESBLOQUEAR ACESSO')
                             )
                         ) : (
-                            React.createElement('div', { className: 'space-y-3 animate-fade-in' },
-                                React.createElement('h4', { className: 'text-xs font-black text-red-600 uppercase mb-1' }, 'RESET DE ACESSOS'),
-                                React.createElement('p', { className: 'text-[10px] text-gray-600 leading-tight' }, 'Use este botão somente para remover suas credenciais de teste antes de entregar ao cliente final. Ao clicar, o Login e Senha serão apagados do servidor, forçando o próximo usuário a realizar a "Configuração de Primeiro Acesso".'),
-                                React.createElement('button', {
-                                    onClick: handleClientReset,
-                                    className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
-                                }, 
-                                    React.createElement('span', { className: 'text-lg' }, '⚠️'),
-                                    'RESETAR PARA O CLIENTE'
+                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in' },
+                                React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('p', { className: 'text-xs text-gray-600' }, 'Utilize para limpar cache local e receber novas atualizações.'),
+                                    React.createElement('button', {
+                                        onClick: hardAppReset,
+                                        className: 'w-full bg-blue-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                                    }, 
+                                        React.createElement('span', { className: 'text-lg' }, '🔄'),
+                                        'LIMPAR CACHE E ATUALIZAR'
+                                    )
+                                ),
+                                React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('p', { className: 'text-xs text-gray-600' }, 'Apaga as credenciais de acesso atuais para nova entrega ao cliente.'),
+                                    React.createElement('button', {
+                                        onClick: handleClientReset,
+                                        className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                                    }, 
+                                        React.createElement('span', { className: 'text-lg' }, '⚠️'),
+                                        'RESETAR PARA O CLIENTE'
+                                    )
                                 ),
                                 React.createElement('button', {
                                     onClick: () => setIsDevUnlocked(false),
-                                    className: 'w-full text-[10px] font-bold text-gray-400 hover:text-red-500 transition underline pt-2'
+                                    className: 'md:col-span-2 text-xs font-bold text-gray-400 hover:text-red-500 transition underline'
                                 }, 'Bloquear Área Novamente')
                             )
                         )
